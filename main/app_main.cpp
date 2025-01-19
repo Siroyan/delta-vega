@@ -41,8 +41,8 @@ extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
 extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
 extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
-extern const uint8_t server_cert_pem_start[] asm("_binary_mosquitto_org_crt_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_mosquitto_org_crt_end");
+extern const uint8_t server_cert_pem_start[] asm("_binary_AmazonRootCA1_pem_start");
+extern const uint8_t server_cert_pem_end[] asm("_binary_AmazonRootCA1_pem_end");
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -129,6 +129,9 @@ static void mqtt_app_start(void)
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
     esp_mqtt_client_register_event(client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
+
+    esp_mqtt_client_publish(client, "/hoge/fuga", "data", 0, 0, 0);
+    ESP_LOGI(TAG, "sent to /hoge/fuga");
 }
 
 extern "C" void app_main(void)
