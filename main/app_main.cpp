@@ -29,6 +29,12 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
+#define LGFX_AUTODETECT
+#include <LovyanGFX.hpp>
+#include <LGFX_AUTODETECT.hpp>
+
+static LGFX lcd;
+
 static const char *TAG = "MQTTS_EXAMPLE";
 
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
@@ -58,7 +64,7 @@ static void log_error_if_nonzero(const char *message, int error_code)
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32, base, event_id);
-    esp_mqtt_event_handle_t event = event_data;
+    esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
     switch ((esp_mqtt_event_id_t)event_id) {
@@ -111,29 +117,31 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 static void mqtt_app_start(void)
 {
-  const esp_mqtt_client_config_t mqtt_cfg = {
-    .broker.address.uri = "mqtts://test.mosquitto.org:8884",
-    .broker.verification.certificate = (const char *)server_cert_pem_start,
-    .credentials = {
-      .authentication = {
-        .certificate = (const char *)client_cert_pem_start,
-        .key = (const char *)client_key_pem_start,
-      },
-    }
-  };
+    esp_mqtt_client_config_t mqtt_cfg = {};
+    mqtt_cfg.broker.address.uri = "mqtts://a1pv0kof3jbrbo-ats.iot.ap-northeast-1.amazonaws.com:8883";
+    mqtt_cfg.broker.verification.certificate = (const char *)server_cert_pem_start;
+    mqtt_cfg.credentials.client_id = "delta-machine-alpha";
+    mqtt_cfg.credentials.authentication.certificate =  (const char *)client_cert_pem_start;
+    mqtt_cfg.credentials.authentication.key =  (const char *)client_key_pem_start;
 
     ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+    esp_mqtt_client_register_event(client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
 }
 
-void app_main(void)
+extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "[APP] Startup..");
     ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
+
+    lcd.init();
+    lcd.setRotation(1);
+    lcd.setBrightness(128);
+    lcd.fillScreen(0xFFFFFFu);
+    lcd.drawNumber(456, 100, 10);
 
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
