@@ -21,6 +21,19 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
+#include "driver/gpio.h"
+#define GPIO_INPUT_IO_0 8
+#define GPIO_INPUT_PIN_SEL (1ULL << GPIO_INPUT_IO_0)
+
+#include <driver/i2c.h>
+#define BH1750_SENSOR_ADDR  0x23    /*!< slave address for BH1750 sensor */
+#define BH1750_CMD_START    0x23    /*!< Command to set measure mode */
+#define ESP_SLAVE_ADDR 0x28         /*!< ESP32 slave address, you can set any 7bit value */
+#define WRITE_BIT  I2C_MASTER_WRITE /*!< I2C master write */
+#define READ_BIT   I2C_MASTER_READ  /*!< I2C master read */
+#define ACK_CHECK_EN   0x1     /*!< I2C master will check ack from slave*/
+#define ACK_CHECK_DIS  0x0     /*!< I2C master will not check ack from slave */
+
 #define LGFX_AUTODETECT
 #include <LovyanGFX.hpp>
 #include <LGFX_AUTODETECT.hpp>
@@ -103,6 +116,34 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 }
 
+static esp_err_t i2c_example_master_sensor_test(i2c_port_t i2c_num, uint8_t* data_h, uint8_t* data_l)
+{
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, BH1750_SENSOR_ADDR << 1 | WRITE_BIT, ACK_CHECK_EN);
+    i2c_master_write_byte(cmd, BH1750_CMD_START, ACK_CHECK_EN);
+    i2c_master_stop(cmd);
+    int ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_PERIOD_MS);
+    i2c_cmd_link_delete(cmd);
+    if (ret == ESP_FAIL) {
+        return ret;
+    }
+    vTaskDelay(30 / portTICK_PERIOD_MS);
+
+    cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, BH1750_SENSOR_ADDR << 1 | READ_BIT, ACK_CHECK_EN);
+    i2c_master_read_byte(cmd, data_h, I2C_MASTER_ACK);
+    i2c_master_read_byte(cmd, data_l, I2C_MASTER_NACK);
+    i2c_master_stop(cmd);
+    ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_PERIOD_MS);
+    i2c_cmd_link_delete(cmd);
+    if (ret == ESP_FAIL) {
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "[APP] Startup..");
@@ -113,7 +154,15 @@ extern "C" void app_main(void)
     lcd.setRotation(1);
     lcd.setBrightness(128);
     lcd.fillScreen(0xFFFFFFu);
-    lcd.drawNumber(456, 100, 10);
+    lcd.drawNumber(12345, 10, 10);
+
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
 
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
