@@ -1,45 +1,4 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
-#include "esp_wifi.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "esp_event.h"
-#include "esp_netif.h"
-#include "protocol_examples_common.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
-
-#include "lwip/sockets.h"
-#include "lwip/dns.h"
-#include "lwip/netdb.h"
-
-#include "esp_log.h"
-#include "mqtt_client.h"
-
-#include "driver/gpio.h"
-#define GPIO_INPUT_IO_0 8
-#define GPIO_INPUT_PIN_SEL (1ULL << GPIO_INPUT_IO_0)
-
-#define LGFX_M5STACK_CORES3
-// #define LGFX_AUTODETECT
-#include <LovyanGFX.hpp>
-#include <LGFX_AUTODETECT.hpp>
-
-static LGFX lcd;
-
-static const char *TAG = "MQTTS_EXAMPLE";
-
-extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
-extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
-extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
-extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
-extern const uint8_t server_cert_pem_start[] asm("_binary_AmazonRootCA1_pem_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_AmazonRootCA1_pem_end");
+#include "app_main.hpp"
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -53,7 +12,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32, base, event_id);
     esp_mqtt_event_handle_t event = static_cast<esp_mqtt_event_handle_t>(event_data);
     esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
@@ -114,12 +72,6 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
 
-    lcd.init();
-    lcd.setRotation(1);
-    lcd.setBrightness(128);
-    lcd.fillScreen(0xFFFFFFu);
-    lcd.drawNumber(12345, 10, 10);
-
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_INPUT;
@@ -137,6 +89,8 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
 
     ESP_ERROR_CHECK(example_connect());
 
