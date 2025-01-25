@@ -25,16 +25,8 @@
 #define GPIO_INPUT_IO_0 8
 #define GPIO_INPUT_PIN_SEL (1ULL << GPIO_INPUT_IO_0)
 
-#include <driver/i2c.h>
-#define BH1750_SENSOR_ADDR  0x23    /*!< slave address for BH1750 sensor */
-#define BH1750_CMD_START    0x23    /*!< Command to set measure mode */
-#define ESP_SLAVE_ADDR 0x28         /*!< ESP32 slave address, you can set any 7bit value */
-#define WRITE_BIT  I2C_MASTER_WRITE /*!< I2C master write */
-#define READ_BIT   I2C_MASTER_READ  /*!< I2C master read */
-#define ACK_CHECK_EN   0x1     /*!< I2C master will check ack from slave*/
-#define ACK_CHECK_DIS  0x0     /*!< I2C master will not check ack from slave */
-
-#define LGFX_AUTODETECT
+#define LGFX_M5STACK_CORES3
+// #define LGFX_AUTODETECT
 #include <LovyanGFX.hpp>
 #include <LGFX_AUTODETECT.hpp>
 
@@ -114,34 +106,6 @@ static void mqtt_app_start(void)
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
     esp_mqtt_client_register_event(client, static_cast<esp_mqtt_event_id_t>(ESP_EVENT_ANY_ID), mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
-}
-
-static esp_err_t i2c_example_master_sensor_test(i2c_port_t i2c_num, uint8_t* data_h, uint8_t* data_l)
-{
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, BH1750_SENSOR_ADDR << 1 | WRITE_BIT, ACK_CHECK_EN);
-    i2c_master_write_byte(cmd, BH1750_CMD_START, ACK_CHECK_EN);
-    i2c_master_stop(cmd);
-    int ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_PERIOD_MS);
-    i2c_cmd_link_delete(cmd);
-    if (ret == ESP_FAIL) {
-        return ret;
-    }
-    vTaskDelay(30 / portTICK_PERIOD_MS);
-
-    cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, BH1750_SENSOR_ADDR << 1 | READ_BIT, ACK_CHECK_EN);
-    i2c_master_read_byte(cmd, data_h, I2C_MASTER_ACK);
-    i2c_master_read_byte(cmd, data_l, I2C_MASTER_NACK);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_PERIOD_MS);
-    i2c_cmd_link_delete(cmd);
-    if (ret == ESP_FAIL) {
-        return ESP_FAIL;
-    }
-    return ESP_OK;
 }
 
 extern "C" void app_main(void)

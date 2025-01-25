@@ -1,6 +1,6 @@
 {
     "C_Cpp.intelliSenseEngine": "default",
-    "idf.espIdfPathWin": "C:\\Users\\siroy\\esp\\v5.1.5\\esp-idf",
+    "idf.espIdfPathWin": "C:\\Users\\siroy\\esp\\v5.4\\esp-idf",
     "idf.openOcdConfigs": [
         "board/esp32s3-bridge.cfg"
     ],
@@ -8,6 +8,7 @@
     "idf.toolsPathWin": "C:\\Users\\siroy\\.espressif",
     "idf.flashType": "UART",
     "files.associations": {
-        "cstdint": "c"
+        "cstdint": "c",
+        "format": "c"
     }
 }
