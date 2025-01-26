@@ -18,16 +18,30 @@ typedef struct count {
     TickType_t tick_num;
 } count_info;
 
-double calc_speed(count_info* count_info_buff) {
-    int16_t diff_count = count_info_buff[0].count_num - count_info_buff[1].count_num;
-    TickType_t diff_tick = count_info_buff[0].tick_num - count_info_buff[1].tick_num;
-
+double calc_speed_raw(int16_t diff_count, TickType_t diff_tick) {
     double distance_meter = (double)diff_count * WHEEL_CIRCUMFERENCE_METER;
     uint16_t diff_time_ms = diff_tick * portTICK_PERIOD_MS;     // Covert to real time.
-    double speed_km_h = 3.6f * distance_meter / ((double)diff_time_ms / 1000.f);
+    return 3.6f * distance_meter / ((double)diff_time_ms / 1000.f);
+}
 
-    ESP_LOGI(TAG, "c0:%d \t diff_count:%d \t diff_time_ms:%d \t speed:%lf", count_info_buff[0].count_num, diff_count, diff_time_ms, speed_km_h);
-    return speed_km_h;
+double calc_speed(count_info* count_info_buff) {
+    double speed_km_h_1 = calc_speed_raw(
+        count_info_buff[0].count_num - count_info_buff[1].count_num,
+        count_info_buff[0].tick_num - count_info_buff[1].tick_num
+    );
+    double speed_km_h_2 = calc_speed_raw(
+        count_info_buff[1].count_num - count_info_buff[2].count_num,
+        count_info_buff[1].tick_num - count_info_buff[2].tick_num
+    );
+    double speed_km_h_3 = calc_speed_raw(
+        count_info_buff[2].count_num - count_info_buff[3].count_num,
+        count_info_buff[2].tick_num - count_info_buff[3].tick_num
+    );
+    double speed_km_h_4 = calc_speed_raw(
+        count_info_buff[3].count_num - count_info_buff[4].count_num,
+        count_info_buff[3].tick_num - count_info_buff[4].tick_num
+    );
+    return (speed_km_h_1 + speed_km_h_2 + speed_km_h_3 + speed_km_h_4 ) / 4.f;
 }
 
 void init_pcnt() {
@@ -50,10 +64,14 @@ void init_pcnt() {
 }
 
 void measure_speed() {
-    static count_info count_info_buff[3];
+    static count_info count_info_buff[5];
     int16_t temp_count;
     pcnt_get_counter_value(PCNT_UNIT_0, &temp_count);
     // Shift data in buffer.
+    count_info_buff[4].count_num = count_info_buff[3].count_num;
+    count_info_buff[4].tick_num = count_info_buff[3].tick_num;
+    count_info_buff[3].count_num = count_info_buff[2].count_num;
+    count_info_buff[3].tick_num = count_info_buff[2].tick_num;
     count_info_buff[2].count_num = count_info_buff[1].count_num;
     count_info_buff[2].tick_num = count_info_buff[1].tick_num;
     count_info_buff[1].count_num = count_info_buff[0].count_num;
