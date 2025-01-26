@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app_main.hpp"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -14,6 +16,7 @@ static uint8_t VEGA_RED = lcd.color332(0xEE, 0x17, 0x1B);
 static uint8_t VEGA_GRN = lcd.color332(0x22, 0xC8, 0x17);
 static uint8_t VEGA_GRY = lcd.color332(0xA4, 0xAF, 0xA8);
 static uint8_t VEGA_ORG = lcd.color332(0xFF, 0xA1, 0x23);
+static uint8_t VEGA_WHT = lcd.color332(0xFF, 0xFF, 0xFF);
 
 void draw_static_contents()
 {
@@ -77,9 +80,9 @@ void draw_static_contents()
     lcd.drawString("LED", 260, 204);
 
     // Indicator LEDs
-    lcd.fillCircle( 245, 175, 5, VEGA_GRN);
-    lcd.fillCircle( 245, 193, 5, VEGA_RED);
-    lcd.fillCircle( 245, 211, 5, VEGA_ORG);
+    lcd.fillCircle( 245, 175, 5, VEGA_GRN);             // HBT
+    lcd.fillCircle( 245, 193, 5, VEGA_RED);             // SEN
+    lcd.fillCircle( 245, 211, 5, VEGA_ORG);             // ENG
     lcd.fillCircle( 295, 175, 5, VEGA_GRN);
     lcd.fillCircle( 295, 193, 5, VEGA_RED);
     lcd.fillCircle( 295, 211, 5, VEGA_GRY);
@@ -90,8 +93,22 @@ void update_display_loop(void *pvParameters)
     draw_static_contents();
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
-    while(1)
-    {
-        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
+    while(1) {
+        double rx_buff;
+        if (xQueueReceive(speed_queue, &rx_buff, 0)) {
+            // Update indicator led
+            lcd.fillCircle( 245, 193, 5, VEGA_GRN);
+            // Update speed
+            lcd.setFont(&fonts::Font7);
+            lcd.setTextColor(0x000000u);
+            lcd.fillRect( 10, 10, 115, 70, VEGA_WHT);
+            lcd.setTextDatum(textdatum_t::top_right);
+            lcd.drawFloat(rx_buff, 1, 125, 20);
+            lcd.setTextDatum(textdatum_t::top_left);
+            ESP_LOGI(TAG, "disp_speed:%lf", rx_buff);
+        } else {
+            lcd.fillCircle( 245, 193, 5, VEGA_GRY);
+        }
+        vTaskDelayUntil(&xLastWakeTime, 10 / portTICK_PERIOD_MS);
     }
 }

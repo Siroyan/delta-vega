@@ -1,5 +1,7 @@
 #include "app_main.hpp"
 
+QueueHandle_t speed_queue = xQueueCreate(1, sizeof(double));
+
 static void log_error_if_nonzero(const char *message, int error_code)
 {
     if (error_code != 0) {
@@ -72,13 +74,13 @@ extern "C" void app_main(void)
     ESP_LOGI(TAG, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
 
-    gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_config(&io_conf);
+    // gpio_config_t io_conf = {};
+    // io_conf.intr_type = GPIO_INTR_DISABLE;
+    // io_conf.mode = GPIO_MODE_INPUT;
+    // io_conf.pin_bit_mask = GPIO_INPUT_PIN_SEL;
+    // io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    // io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    // gpio_config(&io_conf);
 
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
@@ -91,6 +93,7 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
+    xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
 
     ESP_ERROR_CHECK(example_connect());
 
