@@ -95,7 +95,7 @@ void update_display_loop(void *pvParameters)
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
         double rx_buff;
-        if (xQueueReceive(speed_queue, &rx_buff, 0)) {
+        if (xQueuePeek(speed_queue, &rx_buff, 0)) {
             // Update indicator led
             lcd.fillCircle( 245, 193, 5, VEGA_GRN);
             // Update speed
@@ -109,6 +109,6 @@ void update_display_loop(void *pvParameters)
         } else {
             lcd.fillCircle( 245, 193, 5, VEGA_GRY);
         }
-        vTaskDelayUntil(&xLastWakeTime, 10 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, 500 / portTICK_PERIOD_MS);
     }
 }
