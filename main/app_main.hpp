@@ -24,8 +24,6 @@
 #include "mqtt_client.h"
 
 #include "driver/gpio.h"
-// #define GPIO_INPUT_IO_0 8
-// #define GPIO_INPUT_PIN_SEL (1ULL << GPIO_INPUT_IO_0)
 
 static const char *TAG = "DELTA-VEGA";
 
@@ -40,3 +38,4 @@ extern QueueHandle_t speed_queue;
 
 #include "vega_lcd.hpp"
 #include "spd_mes.hpp"
+#include "vega_mqtt.hpp"
