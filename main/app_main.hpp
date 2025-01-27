@@ -39,3 +39,4 @@ extern QueueHandle_t speed_queue;
 #include "vega_lcd.hpp"
 #include "spd_mes.hpp"
 #include "vega_mqtt.hpp"
+#include "vega_gps.hpp"

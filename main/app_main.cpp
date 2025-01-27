@@ -20,6 +20,7 @@ extern "C" void app_main(void)
 
     xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
     xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
+    xTaskCreatePinnedToCore(update_gps_loop, "update_gps_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
     xTaskCreatePinnedToCore(update_mqtt_loop, "update_mqtt_loop", 8192, NULL, 1, NULL, APP_CPU_NUM);
 
     ESP_ERROR_CHECK(example_connect());
