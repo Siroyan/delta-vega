@@ -1,11 +1,12 @@
 #pragma once
 
-#include "nmea_parser.h"
-
 #define TIME_ZONE (+9)
 #define YEAR_BASE (2000) //date in GPS starts from 2000
 
 nmea_parser_handle_t nmea_hdl;
+
+static double latitude_raw;
+static double longitude_raw;
 
 static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -13,6 +14,8 @@ static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_ba
     switch (event_id) {
     case GPS_UPDATE:
         gps = (gps_t *)event_data;
+        latitude_raw = gps->latitude;
+        longitude_raw = gps->longitude;
         /* print information parsed from GPS statements */
         ESP_LOGI(TAG, "%d/%d/%d %d:%d:%d => \r\n"
                  "\t\t\t\t\t\tlatitude   = %.05f°N\r\n"
@@ -48,6 +51,8 @@ void update_gps_loop(void *pvParameters) {
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
-        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
+        xQueueOverwrite(latitude_queue, &latitude_raw);
+        xQueueOverwrite(longitude_queue, &longitude_raw);
+        vTaskDelayUntil(&xLastWakeTime, 200 / portTICK_PERIOD_MS);
     }
 }

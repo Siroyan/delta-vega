@@ -1,6 +1,8 @@
 #include "app_main.hpp"
 
 QueueHandle_t speed_queue = xQueueCreate(1, sizeof(double));
+QueueHandle_t latitude_queue = xQueueCreate(1, sizeof(double));
+QueueHandle_t longitude_queue = xQueueCreate(1, sizeof(double));
 
 extern "C" void app_main(void)
 {

@@ -80,18 +80,27 @@ void update_mqtt_loop(void *pvParameters) {
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
         double speed_queue_buff;
+        double latitude_queue_buff;
+        double longitude_queue_buff;
         xQueuePeek(speed_queue, &speed_queue_buff, 0);
+        xQueuePeek(latitude_queue, &latitude_queue_buff, 0);
+        xQueuePeek(longitude_queue, &longitude_queue_buff, 0);
         char json_buffer[256];
         sprintf(
             json_buffer,
             "{\"speed\":%lf, \"latitude\":%lf, \"longitude\":%lf, \"machine_ts\":%d}",
             speed_queue_buff,
-            111.111,
-            22.2222,
+            latitude_queue_buff,
+            longitude_queue_buff,
             999999
         );
         esp_mqtt_client_publish(client, "v0/delta_machine_alpha/race02/machine_data", json_buffer, 0, 0, 0);
-        ESP_LOGI(TAG, "Publish v0/delta_machine_alpha/race02/machine_data");
+    
+        ESP_LOGI(TAG, "---------------------");
+        ESP_LOGI(TAG, "Publish v0/delta_machine_alpha/race04/machine_data");
+        ESP_LOGI(TAG, "%s", json_buffer);
+        ESP_LOGI(TAG, "---------------------");
+
         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
     }
 }
