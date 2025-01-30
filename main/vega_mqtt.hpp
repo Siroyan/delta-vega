@@ -94,10 +94,10 @@ void update_mqtt_loop(void *pvParameters) {
             longitude_queue_buff,
             999999
         );
-        esp_mqtt_client_publish(client, "v0/delta_machine_alpha/race02/machine_data", json_buffer, 0, 0, 0);
+        esp_mqtt_client_publish(client, "v0/delta_machine_alpha/test0130/machine_data", json_buffer, 0, 0, 0);
     
         ESP_LOGI(TAG, "---------------------");
-        ESP_LOGI(TAG, "Publish v0/delta_machine_alpha/race04/machine_data");
+        ESP_LOGI(TAG, "Publish v0/delta_machine_alpha/test0130/machine_data");
         ESP_LOGI(TAG, "%s", json_buffer);
         ESP_LOGI(TAG, "---------------------");
 
