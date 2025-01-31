@@ -18,6 +18,8 @@ static uint8_t VEGA_GRY = lcd.color332(0xA4, 0xAF, 0xA8);
 static uint8_t VEGA_ORG = lcd.color332(0xFF, 0xA1, 0x23);
 static uint8_t VEGA_WHT = lcd.color332(0xFF, 0xFF, 0xFF);
 
+static bool hbt_led_status = false;
+
 void draw_static_contents()
 {
     lcd.init();
@@ -69,22 +71,24 @@ void draw_static_contents()
     
     // Communication area
     lcd.fillRect(  20, 168, 180,  52, VEGA_GRY);        // Background
+    lcd.setFont(&fonts::Font4);
+    lcd.drawString("Dummy", 60, 180);
 
     // Indicator labels
     lcd.setFont(&fonts::Font2);
     lcd.drawString("HBT", 210, 168);
     lcd.drawString("SEN", 210, 186);
-    lcd.drawString("ENG", 210, 204);
-    lcd.drawString("LED", 260, 168);
-    lcd.drawString("LED", 260, 186);
-    lcd.drawString("LED", 260, 204);
+    lcd.drawString("GPS", 210, 204);
+    lcd.drawString("ENG", 260, 168);
+    lcd.drawString("AAA", 260, 186);
+    lcd.drawString("BBB", 260, 204);
 
     // Indicator LEDs
-    lcd.fillCircle( 245, 175, 5, VEGA_GRN);             // HBT
-    lcd.fillCircle( 245, 193, 5, VEGA_RED);             // SEN
-    lcd.fillCircle( 245, 211, 5, VEGA_ORG);             // ENG
-    lcd.fillCircle( 295, 175, 5, VEGA_GRN);
-    lcd.fillCircle( 295, 193, 5, VEGA_RED);
+    lcd.fillCircle( 245, 175, 5, VEGA_GRY);             // HBT
+    lcd.fillCircle( 245, 193, 5, VEGA_GRY);             // SEN
+    lcd.fillCircle( 245, 211, 5, VEGA_GRY);             // GPS
+    lcd.fillCircle( 295, 175, 5, VEGA_GRY);             // ENG
+    lcd.fillCircle( 295, 193, 5, VEGA_GRY);
     lcd.fillCircle( 295, 211, 5, VEGA_GRY);
 }
 
@@ -94,8 +98,11 @@ void update_display_loop(void *pvParameters)
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
-        double rx_buff;
-        if (xQueuePeek(speed_queue, &rx_buff, 0)) {
+        double speed_queue_buff;
+        double latitude_queue_buff;
+        double longitude_queue_buff;
+        // Speed
+        if (xQueuePeek(speed_queue, &speed_queue_buff, 0)) {
             // Update indicator led
             lcd.fillCircle( 245, 193, 5, VEGA_GRN);
             // Update speed
@@ -103,12 +110,25 @@ void update_display_loop(void *pvParameters)
             lcd.setTextColor(0x000000u);
             lcd.fillRect( 10, 10, 115, 70, VEGA_WHT);
             lcd.setTextDatum(textdatum_t::top_right);
-            lcd.drawFloat(rx_buff, 1, 125, 20);
+            lcd.drawFloat(speed_queue_buff, 1, 125, 20);
             lcd.setTextDatum(textdatum_t::top_left);
-            ESP_LOGI(TAG, "disp_speed:%lf", rx_buff);
+            ESP_LOGI(TAG, "disp_speed:%lf", speed_queue_buff);
         } else {
             lcd.fillCircle( 245, 193, 5, VEGA_GRY);
         }
-        vTaskDelayUntil(&xLastWakeTime, 500 / portTICK_PERIOD_MS);
+        // GPS
+        xQueuePeek(speed_queue, &latitude_queue_buff, 0);
+        xQueuePeek(speed_queue, &longitude_queue_buff, 0);
+        if (latitude_queue_buff > 0.f && longitude_queue_buff > 0.f) {
+            lcd.fillCircle( 245, 211, 5, VEGA_GRN);             // GPS
+        }
+        // Heart beat
+        if (hbt_led_status) {
+            lcd.fillCircle( 245, 175, 5, VEGA_GRY);
+        } else {
+            lcd.fillCircle( 245, 175, 5, VEGA_GRN);
+        }
+        hbt_led_status = !hbt_led_status;
+        vTaskDelayUntil(&xLastWakeTime, 250 / portTICK_PERIOD_MS);
     }
 }
