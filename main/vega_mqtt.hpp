@@ -88,15 +88,13 @@ void update_mqtt_loop(void *pvParameters) {
         xQueuePeek(latitude_queue, &latitude_queue_buff, 0);
         xQueuePeek(longitude_queue, &longitude_queue_buff, 0);
 
-        cJSON *root = cJSON_CreateObject();
-        // 各フィールドをJSONオブジェクトに追加
-        cJSON_AddNumberToObject(root, "speed", speed_queue_buff);
-        cJSON_AddNumberToObject(root, "latitude", latitude_queue_buff);
-        cJSON_AddNumberToObject(root, "longitude", longitude_queue_buff);
-        cJSON_AddNumberToObject(root, "machine_ts", 999999);
+        cJSON *mqtt_packet_json = cJSON_CreateObject();
+        cJSON_AddNumberToObject(mqtt_packet_json, "speed", speed_queue_buff);
+        cJSON_AddNumberToObject(mqtt_packet_json, "latitude", latitude_queue_buff);
+        cJSON_AddNumberToObject(mqtt_packet_json, "longitude", longitude_queue_buff);
+        cJSON_AddNumberToObject(mqtt_packet_json, "machine_ts", 999999);
 
-        char *json_str = cJSON_PrintUnformatted(root);
-
+        char *json_str = cJSON_PrintUnformatted(mqtt_packet_json);
         esp_mqtt_client_publish(client, "v0/delta_machine_alpha/test0130/machine_data", json_str, 0, 0, 0);
     
         ESP_LOGI(TAG, "---------------------");
@@ -105,7 +103,7 @@ void update_mqtt_loop(void *pvParameters) {
         ESP_LOGI(TAG, "---------------------");
 
         free(json_str);
-        cJSON_Delete(root);
+        cJSON_Delete(mqtt_packet_json);
         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
     }
 }
