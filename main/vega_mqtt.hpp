@@ -7,6 +7,8 @@
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
 
+#include <cJSON.h>
+
 esp_mqtt_client_handle_t client;
 
 static void log_error_if_nonzero(const char *message, int error_code)
@@ -85,22 +87,23 @@ void update_mqtt_loop(void *pvParameters) {
         xQueuePeek(speed_queue, &speed_queue_buff, 0);
         xQueuePeek(latitude_queue, &latitude_queue_buff, 0);
         xQueuePeek(longitude_queue, &longitude_queue_buff, 0);
-        char json_buffer[256];
-        sprintf(
-            json_buffer,
-            "{\"speed\":%lf, \"latitude\":%lf, \"longitude\":%lf, \"machine_ts\":%d}",
-            speed_queue_buff,
-            latitude_queue_buff,
-            longitude_queue_buff,
-            999999
-        );
-        esp_mqtt_client_publish(client, "v0/delta_machine_alpha/test0130/machine_data", json_buffer, 0, 0, 0);
+
+        cJSON *mqtt_packet_json = cJSON_CreateObject();
+        cJSON_AddNumberToObject(mqtt_packet_json, "speed", speed_queue_buff);
+        cJSON_AddNumberToObject(mqtt_packet_json, "latitude", latitude_queue_buff);
+        cJSON_AddNumberToObject(mqtt_packet_json, "longitude", longitude_queue_buff);
+        cJSON_AddNumberToObject(mqtt_packet_json, "machine_ts", 999999);
+
+        char *json_str = cJSON_PrintUnformatted(mqtt_packet_json);
+        esp_mqtt_client_publish(client, "v0/delta_machine_alpha/test0130/machine_data", json_str, 0, 0, 0);
     
         ESP_LOGI(TAG, "---------------------");
         ESP_LOGI(TAG, "Publish v0/delta_machine_alpha/test0130/machine_data");
-        ESP_LOGI(TAG, "%s", json_buffer);
+        ESP_LOGI(TAG, "%s", json_str);
         ESP_LOGI(TAG, "---------------------");
 
+        free(json_str);
+        cJSON_Delete(mqtt_packet_json);
         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
     }
 }
