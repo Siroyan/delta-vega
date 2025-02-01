@@ -1,9 +1,3 @@
 [submodule "components/LovyanGFX"]
 	path = components/LovyanGFX
 	url = https://github.com/lovyan03/LovyanGFX.git
-[submodule "components/M5Unified"]
-	path = components/M5Unified
-	url = https://github.com/m5stack/M5Unified.git
-[submodule "components/M5GFX"]
-	path = components/M5GFX
-	url = https://github.com/m5stack/M5GFX.git
