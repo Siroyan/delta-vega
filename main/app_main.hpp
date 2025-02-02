@@ -27,6 +27,12 @@
 
 static const char *TAG = "DELTA-VEGA";
 
+typedef enum {
+    STATE_INITIALIZATION,  // 初期化状態
+    STATE_STANDBY,         // スタンバイ状態
+    STATE_RACING           // レース中状態
+} system_state_t;
+
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
 extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");

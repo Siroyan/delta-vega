@@ -20,8 +20,7 @@ static uint8_t VEGA_WHT = lcd.color332(0xFF, 0xFF, 0xFF);
 
 static bool hbt_led_status = false;
 
-void draw_static_contents()
-{
+void draw_static_contents() {
     lcd.init();
     lcd.setRotation(1);
     lcd.setBrightness(128);
@@ -63,12 +62,6 @@ void draw_static_contents()
     lcd.drawString("6 01:23-04:56", 205, 118);
     lcd.drawString("F 01:23-04:56", 100, 137);
     
-    // Borders
-    lcd.fillRect(   0,   0, 320,  10, VEGA_RED);        // Upper border
-    lcd.fillRect(   0,   0,  10, 240, VEGA_RED);        // Left border
-    lcd.fillRect(   0, 230, 320,  10, VEGA_RED);        // Bottom border
-    lcd.fillRect( 310,   0,  10, 240, VEGA_RED);        // Right border
-    
     // Communication area
     lcd.fillRect(  20, 168, 180,  52, VEGA_GRY);        // Background
     lcd.setFont(&fonts::Font4);
@@ -101,6 +94,29 @@ void update_display_loop(void *pvParameters)
         double speed_queue_buff;
         double latitude_queue_buff;
         double longitude_queue_buff;
+        // Borders
+        switch (*((system_state_t *) pvParameters)) {           
+            case STATE_STANDBY:
+                lcd.fillRect(   0,   0, 320,  10, VEGA_GRN);        // Upper border
+                lcd.fillRect(   0,   0,  10, 240, VEGA_GRN);        // Left border
+                lcd.fillRect(   0, 230, 320,  10, VEGA_GRN);        // Bottom border
+                lcd.fillRect( 310,   0,  10, 240, VEGA_GRN);        // Right border
+                break;
+
+            case STATE_RACING:
+                lcd.fillRect(   0,   0, 320,  10, VEGA_RED);        // Upper border
+                lcd.fillRect(   0,   0,  10, 240, VEGA_RED);        // Left border
+                lcd.fillRect(   0, 230, 320,  10, VEGA_RED);        // Bottom border
+                lcd.fillRect( 310,   0,  10, 240, VEGA_RED);        // Right border
+                break;
+
+            default:
+                lcd.fillRect(   0,   0, 320,  10, VEGA_GRY);        // Upper border
+                lcd.fillRect(   0,   0,  10, 240, VEGA_GRY);        // Left border
+                lcd.fillRect(   0, 230, 320,  10, VEGA_GRY);        // Bottom border
+                lcd.fillRect( 310,   0,  10, 240, VEGA_GRY);        // Right border
+                break;
+        }
         // Speed
         if (xQueuePeek(speed_queue, &speed_queue_buff, 0)) {
             // Update indicator led
