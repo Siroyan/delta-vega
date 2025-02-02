@@ -11,6 +11,7 @@
 #include <LovyanGFX.hpp>
 #include <LGFX_AUTODETECT.hpp>
 static LGFX lcd;
+static LGFX_Sprite sprite(&lcd);
 
 static uint8_t VEGA_RED = lcd.color332(0xEE, 0x17, 0x1B);
 static uint8_t VEGA_GRN = lcd.color332(0x22, 0xC8, 0x17);
@@ -88,6 +89,10 @@ void draw_static_contents() {
 void update_display_loop(void *pvParameters)
 {
     draw_static_contents();
+    
+    sprite.setColorDepth(2);
+    sprite.createSprite(115, 60);
+    
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
@@ -122,12 +127,14 @@ void update_display_loop(void *pvParameters)
             // Update indicator led
             lcd.fillCircle( 245, 193, 5, VEGA_GRN);
             // Update speed
-            lcd.setFont(&fonts::Font7);
-            lcd.setTextColor(0x000000u);
-            lcd.fillRect( 10, 10, 115, 70, VEGA_WHT);
-            lcd.setTextDatum(textdatum_t::top_right);
-            lcd.drawFloat(speed_queue_buff, 1, 125, 20);
-            lcd.setTextDatum(textdatum_t::top_left);
+            sprite.fillScreen(VEGA_WHT);
+            sprite.setTextColor(0);
+            sprite.setFont(&fonts::Font7);
+            sprite.setTextDatum(textdatum_t::top_right);
+            sprite.drawFloat(speed_queue_buff, 1, 115, 10);
+            sprite.setTextDatum(textdatum_t::top_left);
+            sprite.pushSprite(&lcd, 10, 10);
+            sprite.clear();
             ESP_LOGI(TAG, "disp_speed:%lf", speed_queue_buff);
         } else {
             lcd.fillCircle( 245, 193, 5, VEGA_GRY);
