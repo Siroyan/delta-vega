@@ -25,28 +25,16 @@
 
 #include "driver/gpio.h"
 
-static const char *TAG = "DELTA-VEGA";
-
-typedef enum {
-    STATE_INITIALIZATION,  // 初期化状態
-    STATE_STANDBY,         // スタンバイ状態
-    STATE_RACING           // レース中状態
-} system_state_t;
-
-extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
-extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
-extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
-extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
-extern const uint8_t server_cert_pem_start[] asm("_binary_AmazonRootCA1_pem_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_AmazonRootCA1_pem_end");
-
-extern QueueHandle_t speed_queue;
-extern QueueHandle_t latitude_queue;
-extern QueueHandle_t longitude_queue;
-
 #include "nmea_parser.h"
-
 #include "vega_lcd.hpp"
 #include "spd_mes.hpp"
 #include "vega_mqtt.hpp"
 #include "vega_gps.hpp"
+
+static const char *TAG = "DELTA-VEGA";
+
+
+
+extern QueueHandle_t speed_queue;
+extern QueueHandle_t latitude_queue;
+extern QueueHandle_t longitude_queue;

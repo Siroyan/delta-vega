@@ -9,6 +9,17 @@
     "idf.flashType": "UART",
     "files.associations": {
         "cstdint": "c",
-        "format": "c"
+        "format": "c",
+        "bit": "cpp",
+        "charconv": "cpp",
+        "compare": "cpp",
+        "cstddef": "cpp",
+        "string": "cpp",
+        "optional": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "new": "cpp",
+        "text_encoding": "cpp",
+        "functional": "cpp"
     }
 }
