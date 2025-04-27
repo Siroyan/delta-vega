@@ -7,9 +7,7 @@
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
 
-#define LGFX_M5STACK_CORES3
-#include <LovyanGFX.hpp>
-#include <LGFX_AUTODETECT.hpp>
+#include <lgfx_user/LGFX_ESP32S3_ILI9488.hpp>
 static LGFX lcd;
 static LGFX_Sprite sprite(&lcd);
 
