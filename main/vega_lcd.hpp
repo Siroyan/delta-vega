@@ -9,88 +9,114 @@
 
 #include <lgfx_user/LGFX_ESP32S3_ILI9488.hpp>
 static LGFX lcd;
-static LGFX_Sprite sprite(&lcd);
+static LGFX_Sprite speed_sprite(&lcd);
+static LGFX_Sprite arrow_sprite(&lcd);
 
+static const uint16_t LCD_W = 480;
+static const uint16_t LCD_H = 320;
+
+static uint8_t VEGA_BLK = lcd.color332(0x00, 0x00, 0x00);
 static uint8_t VEGA_RED = lcd.color332(0xEE, 0x17, 0x1B);
 static uint8_t VEGA_GRN = lcd.color332(0x22, 0xC8, 0x17);
 static uint8_t VEGA_GRY = lcd.color332(0xA4, 0xAF, 0xA8);
 static uint8_t VEGA_ORG = lcd.color332(0xFF, 0xA1, 0x23);
 static uint8_t VEGA_WHT = lcd.color332(0xFF, 0xFF, 0xFF);
 
+#include "image_data.hpp"
+extern const uint16_t arrow_w;
+extern const uint16_t arrow_h;
+extern const unsigned short arrow_up[];
+extern const unsigned short arrow_down[];
+extern const unsigned short arrow_stay[];
+
 static bool hbt_led_status = false;
+
+uint32_t indicator_labal_1st_x = 20;
+uint32_t indicator_labal_1st_y = 250;
 
 void draw_static_contents() {
     lcd.init();
     lcd.setRotation(1);
-    lcd.setBrightness(128);
+    lcd.setBrightness(255);
     lcd.fillScreen(0xFFFFFFu);
 
     // Current speed
-    lcd.setFont(&fonts::Font7);
     lcd.setTextColor(0x000000u);
-    lcd.drawFloat(25.2, 1, 20, 20);
-    lcd.setFont(&fonts::Font2);
-    lcd.drawString("km/h", 130, 55);
+    lcd.setFont(&fonts::Font4);
+    lcd.drawString("km/h", 218, 75);
 
     // Lap and Average speed
-    lcd.setFont(&fonts::Font2);
-    lcd.drawString("Lap", 170, 30);
-    lcd.drawString("Average", 220, 30);
     lcd.setFont(&fonts::Font4);
-    lcd.drawString("2/7", 170, 50);
-    lcd.drawFloat(29.9, 1, 220, 50);
+    lcd.drawString("Lap", 285, 30);
+    lcd.drawString("Ave", 285, 70);
+    lcd.setFont(&fonts::Font6);
+    lcd.drawString("2   7", 335, 20);
+    lcd.drawLine(370, 55, 390, 20, VEGA_BLK);
+    lcd.drawLine(369, 55, 389, 20, VEGA_BLK);
+    lcd.drawFloat(29.9, 1, 335, 60);
     lcd.setFont(&fonts::Font2);
-    lcd.drawString("km/h", 275, 55);
+    lcd.drawString("km/h", 432, 83);
 
-    // Current time area
-    lcd.setFont(&fonts::Font4);
-    lcd.drawString("01:23", 20, 82);
-    lcd.setColor(VEGA_RED);
-    lcd.fillTriangle(25, 112, 75, 112, 50, 122);
-    lcd.drawString("04:56", 20, 132);
-
-    lcd.fillRect( 90,  82,   2,  70, VEGA_GRY);
-    
-    // Time log area
+    // Total time area
     lcd.setFont(&fonts::Font2);
-    lcd.drawString("1 01:23-04:56", 100,  82);
-    lcd.drawString("2 01:23-04:56", 205,  82);
-    lcd.drawString("3 01:23-04:56", 100,  99);
-    lcd.drawString("4 01:23-04:56", 205,  99);
-    lcd.drawString("5 01:23-04:56", 100, 118);
-    lcd.drawString("6 01:23-04:56", 205, 118);
-    lcd.drawString("F 01:23-04:56", 100, 137);
+    lcd.drawString("TTL Time", 20, 100);
+    lcd.setFont(&fonts::Font6);
+    lcd.drawString("01:23", 20, 120);
+    lcd.drawString("39:20", 166, 120);
+    lcd.setColor(VEGA_GRY);
+    lcd.fillTriangle(150, 120, 150, 156, 160, 138);
     
+    // Lap time area
+    lcd.setFont(&fonts::Font2);
+    lcd.drawString("LAP Time", 20, 170);
+    lcd.setFont(&fonts::Font6);
+    lcd.drawString("01:23", 20, 190);
+    lcd.drawString("04:56", 166, 190);
+    lcd.setColor(VEGA_GRY);
+    lcd.fillTriangle(150, 190, 150, 226, 160, 208);
+
+    lcd.fillRect(20, 240, 440, 2, VEGA_GRY);
+        
     // Communication area
-    lcd.fillRect(  20, 168, 180,  52, VEGA_GRY);        // Background
+    lcd.fillRect(130, 250, 320, 50, VEGA_GRY);        // Background
     lcd.setFont(&fonts::Font4);
-    lcd.drawString("Dummy", 60, 180);
+    lcd.drawString("Dummy", 150, 260);
 
     // Indicator labels
+
     lcd.setFont(&fonts::Font2);
-    lcd.drawString("HBT", 210, 168);
-    lcd.drawString("SEN", 210, 186);
-    lcd.drawString("GPS", 210, 204);
-    lcd.drawString("ENG", 260, 168);
-    lcd.drawString("AAA", 260, 186);
-    lcd.drawString("BBB", 260, 204);
+    lcd.drawString("HBT", indicator_labal_1st_x, indicator_labal_1st_y +  0);
+    lcd.drawString("SEN", indicator_labal_1st_x, indicator_labal_1st_y + 18);
+    lcd.drawString("GPS", indicator_labal_1st_x, indicator_labal_1st_y + 36);
+    lcd.drawString("ENG", indicator_labal_1st_x + 50, indicator_labal_1st_y +  0);
+    lcd.drawString("AAA", indicator_labal_1st_x + 50, indicator_labal_1st_y + 18);
+    lcd.drawString("BBB", indicator_labal_1st_x + 50, indicator_labal_1st_y + 36);
 
     // Indicator LEDs
-    lcd.fillCircle( 245, 175, 5, VEGA_GRY);             // HBT
-    lcd.fillCircle( 245, 193, 5, VEGA_GRY);             // SEN
-    lcd.fillCircle( 245, 211, 5, VEGA_GRY);             // GPS
-    lcd.fillCircle( 295, 175, 5, VEGA_GRY);             // ENG
-    lcd.fillCircle( 295, 193, 5, VEGA_GRY);
-    lcd.fillCircle( 295, 211, 5, VEGA_GRY);
+    lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y +  7, 5, VEGA_GRY);             // HBT
+    lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRY);             // SEN
+    lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 43, 5, VEGA_GRY);             // GPS
+    lcd.fillCircle(indicator_labal_1st_x + 85, indicator_labal_1st_y +  7, 5, VEGA_GRY);             // ENG
+    lcd.fillCircle(indicator_labal_1st_x + 85, indicator_labal_1st_y + 25, 5, VEGA_GRY);
+    lcd.fillCircle(indicator_labal_1st_x + 85, indicator_labal_1st_y + 43, 5, VEGA_GRY);
 }
 
-void update_display_loop(void *pvParameters)
-{
+void draw_outline_border(uint8_t color, uint16_t weight = 10) {
+    lcd.fillRect(0, 0, LCD_W, weight, color);        // Upper border
+    lcd.fillRect(0, 0, weight, LCD_H, color);        // Left border
+    lcd.fillRect(0, LCD_H - weight, LCD_W, weight, color);        // Bottom border
+    lcd.fillRect(LCD_W - weight, 0, weight, LCD_H, color);        // Right border
+}
+
+void update_display_loop(void *pvParameters) {
     draw_static_contents();
     
-    sprite.setColorDepth(2);
-    sprite.createSprite(115, 60);
-    
+    speed_sprite.setColorDepth(2);
+    speed_sprite.createSprite(200, 85);
+
+    arrow_sprite.setBuffer((void*)arrow_down, arrow_w, arrow_h, 16);
+    arrow_sprite.pushSprite(320, 105, TFT_BLACK);
+
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
@@ -100,54 +126,43 @@ void update_display_loop(void *pvParameters)
         // Borders
         switch (*((system_state_t *) pvParameters)) {           
             case STATE_STANDBY:
-                lcd.fillRect(   0,   0, 320,  10, VEGA_GRN);        // Upper border
-                lcd.fillRect(   0,   0,  10, 240, VEGA_GRN);        // Left border
-                lcd.fillRect(   0, 230, 320,  10, VEGA_GRN);        // Bottom border
-                lcd.fillRect( 310,   0,  10, 240, VEGA_GRN);        // Right border
+                draw_outline_border(VEGA_GRN);
                 break;
-
             case STATE_RACING:
-                lcd.fillRect(   0,   0, 320,  10, VEGA_RED);        // Upper border
-                lcd.fillRect(   0,   0,  10, 240, VEGA_RED);        // Left border
-                lcd.fillRect(   0, 230, 320,  10, VEGA_RED);        // Bottom border
-                lcd.fillRect( 310,   0,  10, 240, VEGA_RED);        // Right border
+                draw_outline_border(VEGA_RED);
                 break;
-
             default:
-                lcd.fillRect(   0,   0, 320,  10, VEGA_GRY);        // Upper border
-                lcd.fillRect(   0,   0,  10, 240, VEGA_GRY);        // Left border
-                lcd.fillRect(   0, 230, 320,  10, VEGA_GRY);        // Bottom border
-                lcd.fillRect( 310,   0,  10, 240, VEGA_GRY);        // Right border
+                draw_outline_border(VEGA_GRY);
                 break;
         }
         // Speed
         if (xQueuePeek(speed_queue, &speed_queue_buff, 0)) {
-            // Update indicator led
-            lcd.fillCircle( 245, 193, 5, VEGA_GRN);
+            // // Update indicator led
+            lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRN);
             // Update speed
-            sprite.fillScreen(VEGA_WHT);
-            sprite.setTextColor(0);
-            sprite.setFont(&fonts::Font7);
-            sprite.setTextDatum(textdatum_t::top_right);
-            sprite.drawFloat(speed_queue_buff, 1, 115, 10);
-            sprite.setTextDatum(textdatum_t::top_left);
-            sprite.pushSprite(&lcd, 10, 10);
-            sprite.clear();
+            speed_sprite.fillScreen(VEGA_WHT);
+            speed_sprite.setTextColor(0);
+            speed_sprite.setFont(&fonts::Font8);
+            speed_sprite.setTextDatum(textdatum_t::top_right);
+            speed_sprite.drawFloat(speed_queue_buff, 1, 200, 10);
+            speed_sprite.setTextDatum(textdatum_t::top_left);
+            speed_sprite.pushSprite(&lcd, 10, 10);
+            speed_sprite.clear();
             ESP_LOGI(TAG, "disp_speed:%lf", speed_queue_buff);
         } else {
-            lcd.fillCircle( 245, 193, 5, VEGA_GRY);
+            lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRY);
         }
         // GPS
         xQueuePeek(speed_queue, &latitude_queue_buff, 0);
         xQueuePeek(speed_queue, &longitude_queue_buff, 0);
         if (latitude_queue_buff > 0.f && longitude_queue_buff > 0.f) {
-            lcd.fillCircle( 245, 211, 5, VEGA_GRN);             // GPS
+            lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 43, 5, VEGA_GRN);
         }
         // Heart beat
         if (hbt_led_status) {
-            lcd.fillCircle( 245, 175, 5, VEGA_GRY);
+            lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y +  7, 5, VEGA_GRY);
         } else {
-            lcd.fillCircle( 245, 175, 5, VEGA_GRN);
+            lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y +  7, 5, VEGA_GRN);
         }
         hbt_led_status = !hbt_led_status;
         vTaskDelayUntil(&xLastWakeTime, 250 / portTICK_PERIOD_MS);
