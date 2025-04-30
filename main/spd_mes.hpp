@@ -9,7 +9,7 @@
 
 #include "driver/pcnt.h"
 
-#define TIRE_PULSE_PIN GPIO_NUM_8
+#define TIRE_PULSE_PIN GPIO_NUM_18
 
 const double WHEEL_CIRCUMFERENCE_METER = 0.65;
 
