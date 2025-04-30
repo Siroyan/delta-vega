@@ -10,6 +10,7 @@
 #include <lgfx_user/LGFX_ESP32S3_ILI9488.hpp>
 static LGFX lcd;
 static LGFX_Sprite speed_sprite(&lcd);
+static LGFX_Sprite gps_sprite(&lcd);
 static LGFX_Sprite arrow_sprite(&lcd);
 
 static const uint16_t LCD_W = 480;
@@ -74,16 +75,9 @@ void draw_static_contents() {
     lcd.drawString("04:56", 166, 190);
     lcd.setColor(VEGA_GRY);
     lcd.fillTriangle(150, 190, 150, 226, 160, 208);
-
     lcd.fillRect(20, 240, 440, 2, VEGA_GRY);
-        
-    // Communication area
-    lcd.fillRect(130, 250, 320, 50, VEGA_GRY);        // Background
-    lcd.setFont(&fonts::Font4);
-    lcd.drawString("Dummy", 150, 260);
-
+    
     // Indicator labels
-
     lcd.setFont(&fonts::Font2);
     lcd.drawString("HBT", indicator_labal_1st_x, indicator_labal_1st_y +  0);
     lcd.drawString("SEN", indicator_labal_1st_x, indicator_labal_1st_y + 18);
@@ -113,6 +107,9 @@ void update_display_loop(void *pvParameters) {
     
     speed_sprite.setColorDepth(2);
     speed_sprite.createSprite(200, 85);
+
+    gps_sprite.setColorDepth(2);
+    gps_sprite.createSprite(320, 50);
 
     arrow_sprite.setBuffer((void*)arrow_down, arrow_w, arrow_h, 16);
     arrow_sprite.pushSprite(320, 105, TFT_BLACK);
@@ -153,8 +150,17 @@ void update_display_loop(void *pvParameters) {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRY);
         }
         // GPS
-        xQueuePeek(speed_queue, &latitude_queue_buff, 0);
-        xQueuePeek(speed_queue, &longitude_queue_buff, 0);
+        xQueuePeek(latitude_queue, &latitude_queue_buff, 0);
+        xQueuePeek(longitude_queue, &longitude_queue_buff, 0);
+        gps_sprite.fillScreen(VEGA_WHT);
+        gps_sprite.setTextColor(0xFFFF00U);
+        gps_sprite.setFont(&fonts::Font2);
+        gps_sprite.drawString("LATI", 5, 5);
+        gps_sprite.drawFloat(latitude_queue_buff, 6, 50, 5);
+        gps_sprite.drawString("LONG", 5, 25);
+        gps_sprite.drawFloat(longitude_queue_buff, 6, 50, 25);
+        gps_sprite.pushSprite(&lcd, 120, 250);
+        gps_sprite.clear();
         if (latitude_queue_buff > 0.f && longitude_queue_buff > 0.f) {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 43, 5, VEGA_GRN);
         }
