@@ -50,3 +50,4 @@ extern QueueHandle_t longitude_queue;
 #include "spd_mes.hpp"
 #include "vega_mqtt.hpp"
 #include "vega_gps.hpp"
+#include "ioexp/ui_manager.hpp"

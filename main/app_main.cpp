@@ -32,6 +32,7 @@ extern "C" void app_main(void)
     while (1) {
         switch (current_state) {
             case STATE_INITIALIZATION:
+                xTaskCreatePinnedToCore(ui_manager_loop, "ui_manager_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, &speed_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_gps_loop, "update_gps_loop", 8192, NULL, 1, &gps_task_handle, APP_CPU_NUM);
