@@ -35,6 +35,8 @@ static bool hbt_led_status = false;
 uint32_t indicator_labal_1st_x = 20;
 uint32_t indicator_labal_1st_y = 250;
 
+uint8_t lap_num = 0;
+
 void draw_static_contents() {
     lcd.init();
     lcd.setRotation(1);
@@ -48,15 +50,15 @@ void draw_static_contents() {
 
     // Lap and Average speed
     lcd.setFont(&fonts::Font4);
-    lcd.drawString("Lap", 285, 30);
-    lcd.drawString("Ave", 285, 70);
+    lcd.drawString("Lap", 285, 25);
+    lcd.drawString("Ave", 285, 75);
     lcd.setFont(&fonts::Font6);
-    lcd.drawString("2   7", 335, 20);
-    lcd.drawLine(370, 55, 390, 20, VEGA_BLK);
-    lcd.drawLine(369, 55, 389, 20, VEGA_BLK);
-    lcd.drawFloat(29.9, 1, 335, 60);
+    lcd.drawString("0   7", 335, 15);
+    lcd.drawLine(370, 55, 390, 15, VEGA_BLK);
+    lcd.drawLine(369, 55, 389, 15, VEGA_BLK);
+    lcd.drawFloat(10.0, 1, 335, 65);
     lcd.setFont(&fonts::Font2);
-    lcd.drawString("km/h", 432, 83);
+    lcd.drawString("km/h", 435, 88);
 
     // Total time area
     lcd.setFont(&fonts::Font2);
@@ -112,7 +114,8 @@ void update_display_loop(void *pvParameters) {
     gps_sprite.createSprite(320, 50);
 
     arrow_sprite.setBuffer((void*)arrow_down, arrow_w, arrow_h, 16);
-    arrow_sprite.pushSprite(320, 105, TFT_BLACK);
+    // arrow_sprite.pushSprite(320, 105, TFT_BLACK);
+    arrow_sprite.pushRotateZoom(380.f, 170.f, 0.f, 0.8, 0.8, TFT_BLACK);
 
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
@@ -120,6 +123,8 @@ void update_display_loop(void *pvParameters) {
         double speed_queue_buff;
         double latitude_queue_buff;
         double longitude_queue_buff;
+        bool ctrl_sw_queue_buff;
+        bool main_sw_queue_buff;
         // Borders
         switch (*((system_state_t *) pvParameters)) {           
             case STATE_STANDBY:
@@ -137,14 +142,11 @@ void update_display_loop(void *pvParameters) {
             // // Update indicator led
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRN);
             // Update speed
-            speed_sprite.fillScreen(VEGA_WHT);
-            speed_sprite.setTextColor(0);
-            speed_sprite.setFont(&fonts::Font8);
-            speed_sprite.setTextDatum(textdatum_t::top_right);
-            speed_sprite.drawFloat(speed_queue_buff, 1, 200, 10);
-            speed_sprite.setTextDatum(textdatum_t::top_left);
-            speed_sprite.pushSprite(&lcd, 10, 10);
-            speed_sprite.clear();
+            lcd.setTextColor(VEGA_BLK, VEGA_WHT);
+            lcd.setFont(&fonts::Font8);
+            lcd.setTextDatum(textdatum_t::top_right);
+            lcd.drawFloat(speed_queue_buff, 1, 210, 20);
+            lcd.setTextDatum(textdatum_t::top_left);
             ESP_LOGI(TAG, "disp_speed:%lf", speed_queue_buff);
         } else {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRY);
@@ -152,17 +154,30 @@ void update_display_loop(void *pvParameters) {
         // GPS
         xQueuePeek(latitude_queue, &latitude_queue_buff, 0);
         xQueuePeek(longitude_queue, &longitude_queue_buff, 0);
-        gps_sprite.fillScreen(VEGA_WHT);
-        gps_sprite.setTextColor(0xFFFF00U);
-        gps_sprite.setFont(&fonts::Font2);
-        gps_sprite.drawString("LATI", 5, 5);
-        gps_sprite.drawFloat(latitude_queue_buff, 6, 50, 5);
-        gps_sprite.drawString("LONG", 5, 25);
-        gps_sprite.drawFloat(longitude_queue_buff, 6, 50, 25);
-        gps_sprite.pushSprite(&lcd, 120, 250);
-        gps_sprite.clear();
+        lcd.setTextColor(VEGA_BLK, VEGA_WHT);
+        lcd.setFont(&fonts::Font4);
+        lcd.drawString("LATI", 125, 250);
+        lcd.drawFloat(latitude_queue_buff, 6, 210, 250);
+        lcd.drawString("LONG", 125, 282);
+        lcd.drawFloat(longitude_queue_buff, 6, 210, 282);
+
         if (latitude_queue_buff > 0.f && longitude_queue_buff > 0.f) {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 43, 5, VEGA_GRN);
+        } else {
+            lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 43, 5, VEGA_GRY);
+        }
+        // Lap
+        if (xQueueReceive(ctrl_sw_queue, &ctrl_sw_queue_buff, 0)) {
+            if (lap_num == 7) {
+                lap_num = 0;
+            } else {
+                lap_num++;
+            }
+            lcd.setFont(&fonts::Font6);
+            lcd.setTextColor(VEGA_BLK, VEGA_WHT);
+            lcd.setCursor(335, 15);
+            lcd.printf("%d", lap_num);
+            ESP_LOGI(TAG, "ctrl_sw:%d", ctrl_sw_queue_buff);
         }
         // Heart beat
         if (hbt_led_status) {
@@ -170,6 +185,8 @@ void update_display_loop(void *pvParameters) {
         } else {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y +  7, 5, VEGA_GRN);
         }
+        // ENG
+
         hbt_led_status = !hbt_led_status;
         vTaskDelayUntil(&xLastWakeTime, 250 / portTICK_PERIOD_MS);
     }

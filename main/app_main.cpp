@@ -6,10 +6,13 @@ TaskHandle_t mqtt_task_handle;
 TaskHandle_t gps_task_handle;
 TaskHandle_t speed_task_handle;
 TaskHandle_t display_task_handle;
+TaskHandle_t ui_manager_task_handle;
 
 QueueHandle_t speed_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t latitude_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t longitude_queue = xQueueCreate(1, sizeof(double));
+QueueHandle_t ctrl_sw_queue = xQueueCreate(1, sizeof(bool));
+QueueHandle_t main_sw_queue = xQueueCreate(1, sizeof(bool));
 
 extern "C" void app_main(void)
 {
@@ -32,7 +35,7 @@ extern "C" void app_main(void)
     while (1) {
         switch (current_state) {
             case STATE_INITIALIZATION:
-                xTaskCreatePinnedToCore(ui_manager_loop, "ui_manager_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
+                xTaskCreatePinnedToCore(ui_manager_loop, "ui_manager_loop", 8192, NULL, 1, &ui_manager_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, &speed_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_gps_loop, "update_gps_loop", 8192, NULL, 1, &gps_task_handle, APP_CPU_NUM);
