@@ -10,6 +10,13 @@
 #define OUTPUT_PORT_REGISTER_ADDR       0x01
 #define CONFIGURATION_REGISTER_ADDR     0x03
 
+enum LedPort {
+    kBotRed,
+    kBotGrn,
+    kTopRed,
+    kTopGrn
+};
+
 class io_board
 {
 private:
@@ -20,17 +27,12 @@ private:
 
     esp_err_t set_output_port_register(uint8_t reg_bits);
     esp_err_t set_configuration_register(uint8_t reg_bits);
-public:
+    public:
     io_board(i2c_port_t i2c_port, uint8_t addr);
     ~io_board();
     
+    esp_err_t set_led(LedPort led, bool toggle);
     esp_err_t fetch_input_port_register(void);
-    
-    esp_err_t set_top_grn(bool toggle);
-    esp_err_t set_top_red(bool toggle);
-    esp_err_t set_bot_grn(bool toggle);
-    esp_err_t set_bot_red(bool toggle);
-
     esp_err_t set_all_leds_on(void);
 
     bool get_input_port_register_single_bit(uint8_t bit_pos);
@@ -43,36 +45,13 @@ io_board::io_board(i2c_port_t i2c_port, uint8_t addr) {
     set_configuration_register(0b11110000);
 }
 
-esp_err_t io_board::set_top_grn(bool toggle) {
+esp_err_t io_board::set_led(LedPort led_port, bool toggle) {
     if (toggle) {
-        return set_output_port_register(output_port_register_bits_ | (1 << 3));
+        output_port_register_bits_ = output_port_register_bits_ | (1 << led_port);
     } else {
-        return set_output_port_register(output_port_register_bits_ & ~(1 << 3));
+        output_port_register_bits_ = output_port_register_bits_ & ~(1 << led_port);
     }
-}
-
-esp_err_t io_board::set_top_red(bool toggle) {
-    if (toggle) {
-        return set_output_port_register(output_port_register_bits_ | (1 << 2));
-    } else {
-        return set_output_port_register(output_port_register_bits_ & ~(1 << 2));
-    }
-}
-
-esp_err_t io_board::set_bot_grn(bool toggle) {
-    if (toggle) {
-        return set_output_port_register(output_port_register_bits_ | (1 << 1));
-    } else {
-        return set_output_port_register(output_port_register_bits_ & ~(1 << 1));
-    }
-}
-
-esp_err_t io_board::set_bot_red(bool toggle) {
-    if (toggle) {
-        return set_output_port_register(output_port_register_bits_ | (1 << 0));
-    } else {
-        return set_output_port_register(output_port_register_bits_ & ~(1 << 0));
-    }
+    return set_output_port_register(output_port_register_bits_);
 }
 
 esp_err_t io_board::set_all_leds_on(void) {
