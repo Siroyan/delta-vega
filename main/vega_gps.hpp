@@ -53,6 +53,6 @@ void update_gps_loop(void *pvParameters) {
     while(1) {
         xQueueOverwrite(latitude_queue, &latitude_raw);
         xQueueOverwrite(longitude_queue, &longitude_raw);
-        vTaskDelayUntil(&xLastWakeTime, 200 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
     }
 }

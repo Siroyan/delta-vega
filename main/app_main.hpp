@@ -43,6 +43,8 @@ extern const uint8_t server_cert_pem_end[] asm("_binary_AmazonRootCA1_pem_end");
 extern QueueHandle_t speed_queue;
 extern QueueHandle_t latitude_queue;
 extern QueueHandle_t longitude_queue;
+extern QueueHandle_t ctrl_sw_queue;
+extern QueueHandle_t main_sw_queue;
 
 #include "nmea_parser.h"
 
@@ -50,3 +52,4 @@ extern QueueHandle_t longitude_queue;
 #include "spd_mes.hpp"
 #include "vega_mqtt.hpp"
 #include "vega_gps.hpp"
+#include "ioexp/ui_manager.hpp"
