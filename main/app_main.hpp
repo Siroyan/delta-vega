@@ -41,6 +41,7 @@ extern const uint8_t server_cert_pem_start[] asm("_binary_AmazonRootCA1_pem_star
 extern const uint8_t server_cert_pem_end[] asm("_binary_AmazonRootCA1_pem_end");
 
 extern QueueHandle_t speed_queue;
+extern QueueHandle_t speed_pulse_queue;
 extern QueueHandle_t latitude_queue;
 extern QueueHandle_t longitude_queue;
 extern QueueHandle_t ctrl_sw_queue;
