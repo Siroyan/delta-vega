@@ -9,6 +9,7 @@ TaskHandle_t display_task_handle;
 TaskHandle_t ui_manager_task_handle;
 
 QueueHandle_t speed_queue = xQueueCreate(1, sizeof(double));
+QueueHandle_t speed_pulse_queue = xQueueCreate(1, sizeof(bool));
 QueueHandle_t latitude_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t longitude_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t ctrl_sw_queue = xQueueCreate(1, sizeof(bool));

@@ -9,8 +9,6 @@
 
 #include <lgfx_user/LGFX_ESP32S3_ILI9488.hpp>
 static LGFX lcd;
-static LGFX_Sprite speed_sprite(&lcd);
-static LGFX_Sprite gps_sprite(&lcd);
 static LGFX_Sprite arrow_sprite(&lcd);
 
 static const uint16_t LCD_W = 480;
@@ -106,21 +104,13 @@ void draw_outline_border(uint8_t color, uint16_t weight = 10) {
 
 void update_display_loop(void *pvParameters) {
     draw_static_contents();
-    
-    speed_sprite.setColorDepth(2);
-    speed_sprite.createSprite(200, 85);
-
-    gps_sprite.setColorDepth(2);
-    gps_sprite.createSprite(320, 50);
-
     arrow_sprite.setBuffer((void*)arrow_down, arrow_w, arrow_h, 16);
-    // arrow_sprite.pushSprite(320, 105, TFT_BLACK);
     arrow_sprite.pushRotateZoom(380.f, 170.f, 0.f, 0.8, 0.8, TFT_BLACK);
-
     TickType_t xLastWakeTime;
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
         double speed_queue_buff;
+        bool speed_pulse_queue_buff;
         double latitude_queue_buff;
         double longitude_queue_buff;
         bool ctrl_sw_queue_buff;
@@ -138,16 +128,17 @@ void update_display_loop(void *pvParameters) {
                 break;
         }
         // Speed
-        if (xQueuePeek(speed_queue, &speed_queue_buff, 0)) {
-            // // Update indicator led
+        // Update speed
+        xQueueReceive(speed_queue, &speed_queue_buff, 0);
+        lcd.setTextColor(VEGA_BLK, VEGA_WHT);
+        lcd.setFont(&fonts::Font8);
+        lcd.setCursor(20, 20);
+        lcd.printf("%04.1f", speed_queue_buff);
+        // Update indicator led
+        xQueueReceive(speed_pulse_queue, &speed_pulse_queue_buff, 0);
+        ESP_LOGI(TAG, "speed_pulse_queue_buff:%d", speed_pulse_queue_buff);
+        if (speed_pulse_queue_buff) {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRN);
-            // Update speed
-            lcd.setTextColor(VEGA_BLK, VEGA_WHT);
-            lcd.setFont(&fonts::Font8);
-            lcd.setTextDatum(textdatum_t::top_right);
-            lcd.drawFloat(speed_queue_buff, 1, 210, 20);
-            lcd.setTextDatum(textdatum_t::top_left);
-            ESP_LOGI(TAG, "disp_speed:%lf", speed_queue_buff);
         } else {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y + 25, 5, VEGA_GRY);
         }
@@ -186,8 +177,7 @@ void update_display_loop(void *pvParameters) {
             lcd.fillCircle(indicator_labal_1st_x + 35, indicator_labal_1st_y +  7, 5, VEGA_GRN);
         }
         // ENG
-
         hbt_led_status = !hbt_led_status;
-        vTaskDelayUntil(&xLastWakeTime, 250 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, 100 / portTICK_PERIOD_MS);
     }
 }
