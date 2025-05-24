@@ -46,11 +46,3 @@ extern QueueHandle_t latitude_queue;
 extern QueueHandle_t longitude_queue;
 extern QueueHandle_t ctrl_sw_queue;
 extern QueueHandle_t main_sw_queue;
-
-#include "nmea_parser.h"
-
-#include "vega_lcd.hpp"
-#include "spd_mes.hpp"
-#include "vega_mqtt.hpp"
-#include "vega_gps.hpp"
-#include "ioexp/ui_manager.hpp"

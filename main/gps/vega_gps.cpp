@@ -1,7 +1,5 @@
-#pragma once
-
-#define TIME_ZONE (+9)
-#define YEAR_BASE (2000) //date in GPS starts from 2000
+#include "vega_gps.hpp"
+#include "nmea_parser.h"
 
 nmea_parser_handle_t nmea_hdl;
 

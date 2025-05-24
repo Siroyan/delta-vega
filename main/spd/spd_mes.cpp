@@ -1,17 +1,15 @@
-#pragma once
-
+#include "spd_mes.hpp"
 #include "app_main.hpp"
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
-
 #include "driver/pcnt.h"
 
 #define TIRE_PULSE_PIN GPIO_NUM_18
 
 const double WHEEL_CIRCUMFERENCE_METER = 0.65;
+
 uint32_t true_pulse_num = 0;
 typedef struct count {
     uint32_t true_pulse_num;

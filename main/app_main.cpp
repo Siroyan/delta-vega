@@ -1,4 +1,9 @@
 #include "app_main.hpp"
+#include "lcd/vega_lcd.hpp"
+#include "spd/spd_mes.hpp"
+#include "mqtt/vega_mqtt.hpp"
+#include "gps/vega_gps.hpp"
+#include "ioexp/ui_manager.hpp"
 
 system_state_t current_state = STATE_INITIALIZATION;
 

@@ -1,5 +1,4 @@
-#pragma once
-
+#include "vega_mqtt.hpp"
 #include "app_main.hpp"
 
 #include "freertos/FreeRTOS.h"
