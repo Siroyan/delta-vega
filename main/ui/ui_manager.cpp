@@ -7,7 +7,7 @@
 #include "freertos/semphr.h"
 
 #include "../app_main.hpp"
-#include "io_board.hpp"
+#include "io_board/io_board.hpp"
 
 #define I2C_MASTER_SCL_IO           8      /*!< GPIO number used for I2C master clock */
 #define I2C_MASTER_SDA_IO           9      /*!< GPIO number used for I2C master data  */

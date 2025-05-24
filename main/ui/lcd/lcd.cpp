@@ -1,4 +1,4 @@
-#include "vega_lcd.hpp"
+#include "lcd.hpp"
 #include "app_main.hpp"
 
 #include "freertos/FreeRTOS.h"

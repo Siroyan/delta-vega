@@ -5,9 +5,9 @@ idf_component_register(
         app_main.cpp
         gps/nmea_parser.c
         gps/vega_gps.cpp
-        ioexp/io_board.cpp
-        ioexp/ui_manager.cpp
-        lcd/vega_lcd.cpp
+        ui/ui_manager.cpp
+        ui/io_board/io_board.cpp
+        ui/lcd/lcd.cpp
         mqtt/vega_mqtt.cpp
         spd/spd_mes.cpp
     INCLUDE_DIRS "."
