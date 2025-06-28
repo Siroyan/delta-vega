@@ -92,6 +92,9 @@ void measure_speed() {
     count_info_buff[0].tick_num = xTaskGetTickCount();
     
     double tx_buff = calc_speed(count_info_buff);
+    if(tx_buff < 0.3) {
+        tx_buff = 0.0;
+    }
     xQueueOverwrite(speed_queue, &tx_buff);
 }
 
