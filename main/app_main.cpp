@@ -1,4 +1,9 @@
 #include "app_main.hpp"
+#include "spd/spd_mes.hpp"
+#include "mqtt/vega_mqtt.hpp"
+#include "gps/vega_gps.hpp"
+#include "ui/ui_manager.hpp"
+#include "ui/lcd/lcd.hpp"
 
 system_state_t current_state = STATE_INITIALIZATION;
 
@@ -37,7 +42,7 @@ extern "C" void app_main(void)
         switch (current_state) {
             case STATE_INITIALIZATION:
                 xTaskCreatePinnedToCore(ui_manager_loop, "ui_manager_loop", 8192, NULL, 1, &ui_manager_task_handle, APP_CPU_NUM);
-                xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
+                // xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, &speed_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_gps_loop, "update_gps_loop", 8192, NULL, 1, &gps_task_handle, APP_CPU_NUM);
                 current_state = STATE_STANDBY;
