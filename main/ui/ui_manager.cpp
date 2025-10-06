@@ -10,11 +10,11 @@
 #include "io_board/io_board.hpp"
 #include "lcd/lcd.hpp"
 
-#define I2C_MASTER_SCL_IO           8      /*!< GPIO number used for I2C master clock */
-#define I2C_MASTER_SDA_IO           9      /*!< GPIO number used for I2C master data  */
-#define I2C_MASTER_FREQ_HZ          100000                     /*!< I2C master clock frequency */
-#define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
-#define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_SCL_IO           10                          /*!< GPIO number used for I2C master clock */
+#define I2C_MASTER_SDA_IO           9                           /*!< GPIO number used for I2C master data  */
+#define I2C_MASTER_FREQ_HZ          100000                      /*!< I2C master clock frequency */
+#define I2C_MASTER_TX_BUF_DISABLE   0                           /*!< I2C master doesn't need buffer */
+#define I2C_MASTER_RX_BUF_DISABLE   0                           /*!< I2C master doesn't need buffer */
 
 const i2c_port_t IO_BOARDS_I2C_PORT = I2C_NUM_1;
 
@@ -35,13 +35,13 @@ static esp_err_t i2c_master_init(void) {
 }
 
 static void set_spd_data() {
-    double spd_queue_buff;
+    double spd_queue_buff = 0;
     bool spd_pulse_queue_buff;
-    xQueueReceive(speed_queue, &spd_queue_buff, 0);
-    xQueueReceive(speed_pulse_queue, &spd_pulse_queue_buff, 0);
+    xQueuePeek(speed_queue, &spd_queue_buff, 0);
+    xQueuePeek(speed_pulse_queue, &spd_pulse_queue_buff, 0);
     display.set_speed(spd_queue_buff);
     // Update indicator led
-    ESP_LOGI(TAG, "speed_pulse_queue_buff:%d", spd_pulse_queue_buff);
+    // ESP_LOGI(TAG, "speed_pulse_queue_buff:%lf", spd_queue_buff);
     if (spd_pulse_queue_buff) {
         display.set_indicator(1, true);
     } else {
@@ -54,6 +54,7 @@ static void set_gps_data() {
     double long_queue_buff;
     xQueuePeek(latitude_queue, &lati_queue_buff, 0);
     xQueuePeek(longitude_queue, &long_queue_buff, 0);
+    // ESP_LOGI(TAG, "(lati, long):(%lf, %lf)", lati_queue_buff, long_queue_buff);
     if (lati_queue_buff > 0.f && long_queue_buff > 0.f) {
         display.set_indicator(2, true);
         display.set_gps_lati(lati_queue_buff);

@@ -6,7 +6,7 @@
 #include "freertos/queue.h"
 #include "driver/pcnt.h"
 
-#define TIRE_PULSE_PIN GPIO_NUM_18
+#define TIRE_PULSE_PIN GPIO_NUM_16
 
 const double WHEEL_CIRCUMFERENCE_METER = 0.65;
 
