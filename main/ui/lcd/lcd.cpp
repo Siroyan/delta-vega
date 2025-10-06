@@ -55,6 +55,11 @@ void lcd::draw_static_contents() {
     display.setColor(VEGA_GRY);
     display.fillTriangle(150, 190, 150, 226, 160, 208);
     display.fillRect(20, 240, 440, 2, VEGA_GRY);
+
+    // GPS area
+    display.setFont(&fonts::Font2);
+    display.drawString("LAT:", 125, 250);
+    display.drawString("LON:", 125, 268);
     
     // Indicator labels
     display.setFont(&fonts::Font2);
@@ -98,13 +103,13 @@ void lcd::set_ave_speed(double speed_value) {
 }
 
 void lcd::set_gps_lati(double lati_value) {
-    display.setFont(&fonts::Font6);
-    display.drawFloat(lati_value, 6, 210, 250);
+    display.setFont(&fonts::Font2);
+    display.drawFloat(lati_value, 6, 160, 250);
 }
 
 void lcd::set_gps_long(double long_value) {
-    display.setFont(&fonts::Font6);
-    display.drawFloat(long_value, 6, 210, 282);
+    display.setFont(&fonts::Font2);
+    display.drawFloat(long_value, 6, 160, 268);
 }
 
 void lcd::set_ttl_time_now(uint16_t time_value) {
