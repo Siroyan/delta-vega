@@ -10,6 +10,7 @@ idf_component_register(
         ui/lcd/lcd.cpp
         mqtt/vega_mqtt.cpp
         spd/spd_mes.cpp
+        sd_logger/sd_logger.cpp
     INCLUDE_DIRS "."
-    REQUIRES esp_wifi protocol_examples_common mqtt LovyanGFX json
+    REQUIRES esp_wifi protocol_examples_common mqtt LovyanGFX json fatfs vfs sdmmc
 )

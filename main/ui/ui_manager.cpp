@@ -20,6 +20,13 @@ const i2c_port_t IO_BOARDS_I2C_PORT = I2C_NUM_1;
 
 lcd display;
 
+// ログ用グローバル変数（外部アクセス用）
+static uint32_t g_total_time_ms = 0;
+static uint32_t g_lap_time_ms = 0;
+static uint8_t g_lap_num = 0;
+static bool g_timer_started = false;
+static double g_average_speed_kmh = 0.0;
+
 static esp_err_t i2c_master_init(void) {
     i2c_config_t conf;
     conf.mode = I2C_MODE_MASTER;
@@ -150,6 +157,27 @@ static uint16_t get_lap_target_time_seconds(uint8_t lap_num) {
     }
 }
 
+static void update_global_log_data(uint32_t total_time_ms, uint32_t lap_time_ms, 
+                                   uint8_t lap_num, bool timer_started, double average_speed_kmh) {
+    // ローカル変数をグローバル変数に同期
+    g_total_time_ms = total_time_ms;
+    g_lap_time_ms = lap_time_ms;
+    g_lap_num = lap_num;
+    g_timer_started = timer_started;
+    g_average_speed_kmh = average_speed_kmh;
+}
+
+void get_ui_manager_log_data(ui_manager_log_data_t* data) {
+    if (data == nullptr) return;
+    
+    // グローバル変数からデータをコピー
+    data->total_time_ms = g_total_time_ms;
+    data->lap_time_ms = g_lap_time_ms;
+    data->lap_number = g_lap_num;
+    data->timer_started = g_timer_started;
+    data->average_speed_kmh = g_average_speed_kmh;
+}
+
 void ui_manager_loop(void *pvParameters) {
     display.initialize();
     // one time process
@@ -193,6 +221,13 @@ void ui_manager_loop(void *pvParameters) {
         update_average_speed(&total_distance_m, &average_speed_kmh, UI_MANAGER_LOOP_TIME_MS, timer_started);
         calculate_average_speed(total_distance_m, total_time_ms, &average_speed_kmh);
         display.set_ave_speed(average_speed_kmh);
+        
+        // 目標ラップタイムの表示（lap_numは0から始まるので+1して実際のラップ番号にする）
+        uint16_t target_lap_time = get_lap_target_time_seconds(lap_num + 1);
+        display.set_lap_time_tgt(target_lap_time);
+        
+        // ログ用グローバル変数の更新
+        update_global_log_data(total_time_ms, lap_time_ms, lap_num + 1, timer_started, average_speed_kmh);
 
         ESP_ERROR_CHECK(io_board_l.fetch_input_port_register());
         ESP_ERROR_CHECK(io_board_r.fetch_input_port_register());

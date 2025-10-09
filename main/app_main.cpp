@@ -4,6 +4,7 @@
 #include "gps/vega_gps.hpp"
 #include "ui/ui_manager.hpp"
 #include "ui/lcd/lcd.hpp"
+#include "sd_logger/sd_logger.hpp"
 
 system_state_t current_state = STATE_INITIALIZATION;
 
@@ -12,6 +13,7 @@ TaskHandle_t gps_task_handle;
 TaskHandle_t speed_task_handle;
 TaskHandle_t display_task_handle;
 TaskHandle_t ui_manager_task_handle;
+TaskHandle_t sd_logger_task_handle;
 
 QueueHandle_t speed_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t speed_pulse_queue = xQueueCreate(1, sizeof(bool));
@@ -46,6 +48,7 @@ extern "C" void app_main(void)
                 // xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, &speed_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_gps_loop, "update_gps_loop", 8192, NULL, 1, &gps_task_handle, APP_CPU_NUM);
+                xTaskCreatePinnedToCore(sd_logger_task, "sd_logger_task", 12288, NULL, 1, &sd_logger_task_handle, APP_CPU_NUM);
                 current_state = STATE_STANDBY;
                 break;
                 

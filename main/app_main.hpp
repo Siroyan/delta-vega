@@ -55,3 +55,6 @@ extern QueueHandle_t main_sw_queue;
 extern QueueHandle_t state_transition_queue;  // 状態遷移通知用キュー
 
 extern system_state_t current_state;
+
+// タスクハンドル
+extern TaskHandle_t sd_logger_task_handle;
