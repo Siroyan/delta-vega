@@ -80,17 +80,23 @@ static void set_outline_border_by_state() {
     }
 }
 
-static void update_stopwatch_timers(uint32_t *total_time_ms, uint32_t *lap_time_ms, uint8_t elapsed_ms) {
-    // RACING状態の判定とタイマーの更新
-    if (current_state == STATE_RACING) {
+static void update_stopwatch_timers(uint32_t *total_time_ms, uint32_t *lap_time_ms, uint8_t elapsed_ms, bool timer_started) {
+    // RACING状態かつタイマー開始後の場合のみタイマーを更新
+    if (current_state == STATE_RACING && timer_started) {
         // 実際の経過時間でタイマーを更新
         *total_time_ms += elapsed_ms;
         *lap_time_ms += elapsed_ms;
-    } else {
+    } else if (current_state != STATE_RACING) {
         // RACING状態以外では必ずタイマーをクリア
         *total_time_ms = 0;
         *lap_time_ms = 0;
     }
+    // RACING状態でもtimer_started=falseの場合は何もしない（時間は止まったまま）
+}
+
+static void update_lap_display(uint8_t lap_num) {
+    // LAP数の表示を更新
+    display.set_lap_num(lap_num);
 }
 
 static void update_time_display(uint32_t total_time_ms, uint32_t lap_time_ms) {
@@ -120,6 +126,12 @@ void ui_manager_loop(void *pvParameters) {
     uint32_t total_time_ms = 0;              // 総経過時間（ms）
     uint32_t lap_time_ms = 0;                // 現在のラップ時間（ms）
     
+    // LAP管理用の変数
+    uint8_t lap_num = 0;                     // 現在のLAP数
+    
+    // タイマー開始管理用の変数
+    bool timer_started = false;              // タイマー開始フラグ
+    
     // loop
     uint16_t hbt_led_timer = 0;
     bool hbt_led_status = false;
@@ -127,7 +139,7 @@ void ui_manager_loop(void *pvParameters) {
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
         // ストップウォッチ機能の更新
-        update_stopwatch_timers(&total_time_ms, &lap_time_ms, UI_MANAGER_LOOP_TIME_MS);
+        update_stopwatch_timers(&total_time_ms, &lap_time_ms, UI_MANAGER_LOOP_TIME_MS, timer_started);
         // 時間表示の更新（常に行い、状態に応じて適切な値を表示）
         update_time_display(total_time_ms, lap_time_ms);
 
@@ -146,10 +158,21 @@ void ui_manager_loop(void *pvParameters) {
             button_press_count++;
             button_pressed_flag = true;
             
-            // RACING状態中はラップ時間をリセット
+            // RACING状態中の処理
             if (current_state == STATE_RACING) {
-                lap_time_ms = 0;
-                ESP_LOGI(TAG, "Lap time reset! Button press count: %ld", button_press_count);
+                if (!timer_started) {
+                    // 最初のボタン押下: タイマー開始
+                    timer_started = true;
+                    ESP_LOGI(TAG, "First button press in RACING - timer started! Button press count: %ld", button_press_count);
+                }
+                // ラップ数を加算
+                if (lap_num == 7) {
+                    lap_num = 0;
+                } else {
+                    lap_num++;
+                }
+                display.set_lap_num(lap_num);           // ラップ数を表示
+                lap_time_ms = 0;                        // ラップタイムをクリア
             } else {
                 ESP_LOGI(TAG, "Button pressed! Count: %ld, setting pressed_flag=true", button_press_count);
             }
@@ -176,9 +199,12 @@ void ui_manager_loop(void *pvParameters) {
                     // RACING状態: 全データをクリアしてSTANDBY状態への遷移を通知
                     total_time_ms = 0;
                     lap_time_ms = 0;
+                    lap_num = 0;
+                    timer_started = false;
+                    display.set_lap_num(lap_num);
                     state_transition_msg_t msg = STATE_TRANSITION_TO_STANDBY;
                     if (xQueueSend(state_transition_queue, &msg, 0) == pdTRUE) {
-                        ESP_LOGI(TAG, "Long press in RACING - clearing all timer data and requesting transition to STANDBY (timer=%ldms)", button_long_press_timer);
+                        ESP_LOGI(TAG, "Long press in RACING - clearing all timer and lap data, requesting transition to STANDBY (timer=%ldms)", button_long_press_timer);
                     }
                 }
                 button_press_count = 0;

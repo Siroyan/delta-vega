@@ -144,6 +144,13 @@ void lcd::set_lap_time_tgt(uint16_t time_value) {
     display.drawString("04:56", 166, 190);
 }
 
+void lcd::set_lap_num(uint8_t num) {
+    display.setFont(&fonts::Font6);
+    display.setTextColor(VEGA_BLK, VEGA_WHT);
+    display.setCursor(335, 15);
+    display.printf("%d", num);
+}
+
 void lcd::set_arrow(uint8_t arrow_type) {
     switch (arrow_type) {
         case 0:
@@ -181,28 +188,5 @@ void lcd::set_indicator(uint8_t index, bool toggle) {
             break;
         default:
             break;
-    }
-}
-
-void lcd::update_display_loop(void *pvParameters) {
-    TickType_t xLastWakeTime;
-    xLastWakeTime = xTaskGetTickCount();
-    while(1) {
-        bool ctrl_sw_queue_buff;
-        bool main_sw_queue_buff;
-        // Lap
-        if (xQueueReceive(ctrl_sw_queue, &ctrl_sw_queue_buff, 0)) {
-            if (lap_num == 7) {
-                lap_num = 0;
-            } else {
-                lap_num++;
-            }
-            display.setFont(&fonts::Font6);
-            display.setTextColor(VEGA_BLK, VEGA_WHT);
-            display.setCursor(335, 15);
-            display.printf("%d", lap_num);
-            ESP_LOGI(TAG, "ctrl_sw:%d", ctrl_sw_queue_buff);
-        }
-        vTaskDelayUntil(&xLastWakeTime, 100 / portTICK_PERIOD_MS);
     }
 }

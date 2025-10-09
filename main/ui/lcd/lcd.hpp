@@ -47,7 +47,4 @@ public:
     void set_arrow(uint8_t arrow_type);             // Pace arrow
     void set_outline_border(uint8_t color, uint16_t weight);
     void set_indicator(uint8_t index, bool toggle);
-
-    // TODO (Remove)
-    void update_display_loop(void *pvParameters);
 };
