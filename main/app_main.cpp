@@ -19,6 +19,7 @@ QueueHandle_t latitude_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t longitude_queue = xQueueCreate(1, sizeof(double));
 QueueHandle_t ctrl_sw_queue = xQueueCreate(1, sizeof(bool));
 QueueHandle_t main_sw_queue = xQueueCreate(1, sizeof(bool));
+QueueHandle_t state_transition_queue = xQueueCreate(1, sizeof(state_transition_msg_t));
 
 extern "C" void app_main(void)
 {
@@ -49,22 +50,49 @@ extern "C" void app_main(void)
                 break;
                 
             case STATE_STANDBY:
-                if (false) {
-                    current_state = STATE_RACING;
-                }
+                ESP_LOGI(TAG, "STATE_STANDBY");
+                // 状態遷移通知をチェック
                 break;
                 
             case STATE_RACING:
-                xTaskCreatePinnedToCore(update_mqtt_loop, "update_mqtt_loop", 8192, NULL, 1, &mqtt_task_handle, APP_CPU_NUM);
-                if (true) {
-                    vTaskSuspend(mqtt_task_handle);
-                    current_state = STATE_STANDBY;
+                ESP_LOGI(TAG, "STATE_RACING");
+                // MQTTタスクを初回のみ作成
+                if (mqtt_task_handle == NULL) {
+                    // xTaskCreatePinnedToCore(update_mqtt_loop, "update_mqtt_loop", 8192, NULL, 1, &mqtt_task_handle, APP_CPU_NUM);
+                    ESP_LOGI(TAG, "MQTT task started");
                 }
                 break;
                 
             default:
                 break;
         }
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        
+        // 状態遷移メッセージの監視
+        state_transition_msg_t transition_msg;
+        if (xQueueReceive(state_transition_queue, &transition_msg, 100 / portTICK_PERIOD_MS) == pdTRUE) {
+            switch (transition_msg) {
+                case STATE_TRANSITION_TO_RACING:
+                    if (current_state == STATE_STANDBY) {
+                        current_state = STATE_RACING;
+                        ESP_LOGI(TAG, "State transition: STANDBY -> RACING");
+                    }
+                    break;
+                    
+                case STATE_TRANSITION_TO_STANDBY:
+                    if (current_state == STATE_RACING) {
+                        if (mqtt_task_handle != NULL) {
+                            vTaskDelete(mqtt_task_handle);
+                            mqtt_task_handle = NULL;
+                            ESP_LOGI(TAG, "MQTT task stopped");
+                        }
+                        current_state = STATE_STANDBY;
+                        ESP_LOGI(TAG, "State transition: RACING -> STANDBY");
+                    }
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
     }
 }

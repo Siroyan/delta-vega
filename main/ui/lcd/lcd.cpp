@@ -114,7 +114,13 @@ void lcd::set_gps_long(double long_value) {
 
 void lcd::set_ttl_time_now(uint16_t time_value) {
     display.setFont(&fonts::Font6);
-    display.drawString("01:23", 20, 120);
+    // time_valueを分:秒のフォーマットに変換
+    uint16_t minutes = time_value / 60;
+    uint16_t seconds = time_value % 60;
+    char time_str[8];  // "MM:SS\0" + 余裕を持たせる
+    snprintf(time_str, sizeof(time_str), "%02d:%02d", minutes, seconds);
+    display.setTextColor(VEGA_BLK, VEGA_WHT);  // 背景をクリアに
+    display.drawString(time_str, 20, 120);
 }
 
 void lcd::set_ttl_time_tgt(uint16_t time_value) {
@@ -124,7 +130,13 @@ void lcd::set_ttl_time_tgt(uint16_t time_value) {
 
 void lcd::set_lap_time_now(uint16_t time_value) {
     display.setFont(&fonts::Font6);
-    display.drawString("01:23", 20, 190);
+    // time_valueを分:秒のフォーマットに変換
+    uint16_t minutes = time_value / 60;
+    uint16_t seconds = time_value % 60;
+    char time_str[8];  // "MM:SS\0" + 余裕を持たせる
+    snprintf(time_str, sizeof(time_str), "%02d:%02d", minutes, seconds);
+    display.setTextColor(VEGA_BLK, VEGA_WHT);  // 背景をクリアに
+    display.drawString(time_str, 20, 190);
 }
 
 void lcd::set_lap_time_tgt(uint16_t time_value) {

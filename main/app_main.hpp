@@ -33,6 +33,12 @@ typedef enum {
     STATE_RACING           // レース中状態
 } system_state_t;
 
+// 状態遷移通知用のメッセージタイプ
+typedef enum {
+    STATE_TRANSITION_TO_RACING,   // RACING状態への遷移要求
+    STATE_TRANSITION_TO_STANDBY   // STANDBY状態への遷移要求
+} state_transition_msg_t;
+
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
 extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
@@ -46,3 +52,6 @@ extern QueueHandle_t latitude_queue;
 extern QueueHandle_t longitude_queue;
 extern QueueHandle_t ctrl_sw_queue;
 extern QueueHandle_t main_sw_queue;
+extern QueueHandle_t state_transition_queue;  // 状態遷移通知用キュー
+
+extern system_state_t current_state;
