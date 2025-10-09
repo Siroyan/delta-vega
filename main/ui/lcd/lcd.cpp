@@ -42,7 +42,7 @@ void lcd::draw_static_contents() {
     display.drawString("TTL Time", 20, 100);
     display.setFont(&fonts::Font6);
     display.drawString("01:23", 20, 120);
-    display.drawString("39:20", 166, 120);
+    display.drawString("39:16", 166, 120);
     display.setColor(VEGA_GRY);
     display.fillTriangle(150, 120, 150, 156, 160, 138);
     
@@ -51,7 +51,7 @@ void lcd::draw_static_contents() {
     display.drawString("LAP Time", 20, 170);
     display.setFont(&fonts::Font6);
     display.drawString("01:23", 20, 190);
-    display.drawString("04:56", 166, 190);
+    display.drawString("05:28", 166, 190);
     display.setColor(VEGA_GRY);
     display.fillTriangle(150, 190, 150, 226, 160, 208);
     display.fillRect(20, 240, 440, 2, VEGA_GRY);
@@ -99,7 +99,8 @@ void lcd::set_speed(double speed_value) {
 
 void lcd::set_ave_speed(double speed_value) {
     display.setFont(&fonts::Font6);
-    display.drawFloat(20.0, 1, 335, 65);
+    display.setTextColor(VEGA_BLK, VEGA_WHT);  // 背景をクリアに
+    display.drawFloat(speed_value, 1, 335, 65);
 }
 
 void lcd::set_gps_lati(double lati_value) {
@@ -141,7 +142,13 @@ void lcd::set_lap_time_now(uint16_t time_value) {
 
 void lcd::set_lap_time_tgt(uint16_t time_value) {
     display.setFont(&fonts::Font6);
-    display.drawString("04:56", 166, 190);
+    // time_valueを分:秒のフォーマットに変換
+    uint16_t minutes = time_value / 60;
+    uint16_t seconds = time_value % 60;
+    char time_str[8];  // "MM:SS\0" + 余裕を持たせる
+    snprintf(time_str, sizeof(time_str), "%02d:%02d", minutes, seconds);
+    display.setTextColor(VEGA_BLK, VEGA_WHT);  // 背景をクリアに
+    display.drawString(time_str, 166, 190);
 }
 
 void lcd::set_lap_num(uint8_t num) {

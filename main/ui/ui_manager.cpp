@@ -108,6 +108,48 @@ static void update_time_display(uint32_t total_time_ms, uint32_t lap_time_ms) {
     display.set_lap_time_now(lap_time_sec);    // ラップ時間を表示
 }
 
+static void update_average_speed(double *total_distance_m, double *average_speed_kmh, uint8_t elapsed_ms, bool timer_started) {
+    // RACING状態かつタイマー開始後の場合のみ距離を累積
+    if (current_state == STATE_RACING && timer_started) {
+        // 現在の速度を取得
+        double current_speed_kmh = 0.0;
+        if (xQueuePeek(speed_queue, &current_speed_kmh, 0) == pdTRUE) {
+            // 現在の速度から距離を累積計算 (speed[km/h] * time[h] = distance[km])
+            double distance_increment_km = current_speed_kmh * (elapsed_ms / 1000.0) / 3600.0;
+            *total_distance_m += distance_increment_km * 1000.0; // kmをmに変換
+        }
+        
+        // 平均時速を計算 (総走行距離[km] / 総時間[h])
+        uint32_t total_time_sec = 0;
+        // 総時間を別途取得する必要があるため、引数として受け取る方式に変更
+    } else if (current_state != STATE_RACING) {
+        // RACING状態以外では距離と平均時速をクリア
+        *total_distance_m = 0.0;
+        *average_speed_kmh = 0.0;
+    }
+}
+
+static void calculate_average_speed(double total_distance_m, uint32_t total_time_ms, double *average_speed_kmh) {
+    if (total_time_ms > 0) {
+        // 平均時速 = 総走行距離[km] / 総時間[h]
+        double total_time_h = total_time_ms / (1000.0 * 3600.0);
+        *average_speed_kmh = (total_distance_m / 1000.0) / total_time_h;
+    } else {
+        *average_speed_kmh = 0.0;
+    }
+}
+
+static uint16_t get_lap_target_time_seconds(uint8_t lap_num) {
+    // ラップ数に応じた目標タイムを返す（秒単位）
+    if (lap_num == 1) {
+        // 1周目: 5:28 = 5*60 + 28 = 328秒
+        return 328;
+    } else {
+        // 2周目以降: 5:23 = 5*60 + 23 = 323秒
+        return 323;
+    }
+}
+
 void ui_manager_loop(void *pvParameters) {
     display.initialize();
     // one time process
@@ -132,6 +174,10 @@ void ui_manager_loop(void *pvParameters) {
     // タイマー開始管理用の変数
     bool timer_started = false;              // タイマー開始フラグ
     
+    // 平均時速計算用の変数
+    double total_distance_m = 0.0;           // 総走行距離（メートル）
+    double average_speed_kmh = 0.0;          // 平均時速（km/h）
+    
     // loop
     uint16_t hbt_led_timer = 0;
     bool hbt_led_status = false;
@@ -142,6 +188,11 @@ void ui_manager_loop(void *pvParameters) {
         update_stopwatch_timers(&total_time_ms, &lap_time_ms, UI_MANAGER_LOOP_TIME_MS, timer_started);
         // 時間表示の更新（常に行い、状態に応じて適切な値を表示）
         update_time_display(total_time_ms, lap_time_ms);
+        
+        // 平均時速の計算と表示
+        update_average_speed(&total_distance_m, &average_speed_kmh, UI_MANAGER_LOOP_TIME_MS, timer_started);
+        calculate_average_speed(total_distance_m, total_time_ms, &average_speed_kmh);
+        display.set_ave_speed(average_speed_kmh);
 
         ESP_ERROR_CHECK(io_board_l.fetch_input_port_register());
         ESP_ERROR_CHECK(io_board_r.fetch_input_port_register());
@@ -172,6 +223,9 @@ void ui_manager_loop(void *pvParameters) {
                     lap_num++;
                 }
                 display.set_lap_num(lap_num);           // ラップ数を表示
+                // 目標ラップタイムの表示（lap_numは0から始まるので+1して実際のラップ番号にする）
+                uint16_t target_lap_time = get_lap_target_time_seconds(lap_num);
+                display.set_lap_time_tgt(target_lap_time);
                 lap_time_ms = 0;                        // ラップタイムをクリア
             } else {
                 ESP_LOGI(TAG, "Button pressed! Count: %ld, setting pressed_flag=true", button_press_count);
@@ -201,10 +255,13 @@ void ui_manager_loop(void *pvParameters) {
                     lap_time_ms = 0;
                     lap_num = 0;
                     timer_started = false;
+                    total_distance_m = 0.0;
+                    average_speed_kmh = 0.0;
                     display.set_lap_num(lap_num);
+                    display.set_ave_speed(average_speed_kmh);
                     state_transition_msg_t msg = STATE_TRANSITION_TO_STANDBY;
                     if (xQueueSend(state_transition_queue, &msg, 0) == pdTRUE) {
-                        ESP_LOGI(TAG, "Long press in RACING - clearing all timer and lap data, requesting transition to STANDBY (timer=%ldms)", button_long_press_timer);
+                        ESP_LOGI(TAG, "Long press in RACING - clearing all timer, lap and average speed data, requesting transition to STANDBY (timer=%ldms)", button_long_press_timer);
                     }
                 }
                 button_press_count = 0;
