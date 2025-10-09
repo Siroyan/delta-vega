@@ -80,13 +80,14 @@ static void set_outline_border_by_state() {
     }
 }
 
-static void update_stopwatch_timers(uint32_t *total_time_ms, uint32_t *lap_time_ms, uint32_t elapsed_ms) {
+static void update_stopwatch_timers(uint32_t *total_time_ms, uint32_t *lap_time_ms, uint8_t elapsed_ms) {
     // RACING状態の判定とタイマーの更新
     if (current_state == STATE_RACING) {
         // 実際の経過時間でタイマーを更新
         *total_time_ms += elapsed_ms;
         *lap_time_ms += elapsed_ms;
     } else {
+        // RACING状態以外では必ずタイマーをクリア
         *total_time_ms = 0;
         *lap_time_ms = 0;
     }
@@ -120,19 +121,16 @@ void ui_manager_loop(void *pvParameters) {
     uint32_t lap_time_ms = 0;                // 現在のラップ時間（ms）
     
     // loop
-    uint8_t hbt_led_timer = 0;
+    uint16_t hbt_led_timer = 0;
     bool hbt_led_status = false;
     TickType_t xLastWakeTime;
-    TickType_t xCurrentTime;
-    TickType_t elapsed_ticks;
-    uint32_t elapsed_ms;
     xLastWakeTime = xTaskGetTickCount();
     while(1) {
-        // 現在の時刻と経過時間を計算
-        xCurrentTime = xTaskGetTickCount();
-        elapsed_ticks = xCurrentTime - xLastWakeTime;
-        elapsed_ms = elapsed_ticks * portTICK_PERIOD_MS;
-        
+        // ストップウォッチ機能の更新
+        update_stopwatch_timers(&total_time_ms, &lap_time_ms, UI_MANAGER_LOOP_TIME_MS);
+        // 時間表示の更新（常に行い、状態に応じて適切な値を表示）
+        update_time_display(total_time_ms, lap_time_ms);
+
         ESP_ERROR_CHECK(io_board_l.fetch_input_port_register());
         ESP_ERROR_CHECK(io_board_r.fetch_input_port_register());
         
@@ -164,13 +162,24 @@ void ui_manager_loop(void *pvParameters) {
         
         // 長押し判定（ボタンが押され続けている時間をカウント）
         if (button_pressed_flag && current_button_state) {
-            button_long_press_timer += elapsed_ms;  // 実際の経過時間でタイマー更新
+            button_long_press_timer += UI_MANAGER_LOOP_TIME_MS;
             
-            // 1秒長押しでRACING状態への遷移を通知
+            // 状態に応じて長押し処理を分岐
             if (button_long_press_timer >= 1000) {
-                state_transition_msg_t msg = STATE_TRANSITION_TO_RACING;
-                if (xQueueSend(state_transition_queue, &msg, 0) == pdTRUE) {
-                    ESP_LOGI(TAG, "Long press detected - requesting transition to RACING (timer=%ldms)", button_long_press_timer);
+                if (current_state == STATE_STANDBY) {
+                    // STANDBY状態: RACING状態への遷移を通知
+                    state_transition_msg_t msg = STATE_TRANSITION_TO_RACING;
+                    if (xQueueSend(state_transition_queue, &msg, 0) == pdTRUE) {
+                        ESP_LOGI(TAG, "Long press in STANDBY - requesting transition to RACING (timer=%ldms)", button_long_press_timer);
+                    }
+                } else if (current_state == STATE_RACING) {
+                    // RACING状態: 全データをクリアしてSTANDBY状態への遷移を通知
+                    total_time_ms = 0;
+                    lap_time_ms = 0;
+                    state_transition_msg_t msg = STATE_TRANSITION_TO_STANDBY;
+                    if (xQueueSend(state_transition_queue, &msg, 0) == pdTRUE) {
+                        ESP_LOGI(TAG, "Long press in RACING - clearing all timer data and requesting transition to STANDBY (timer=%ldms)", button_long_press_timer);
+                    }
                 }
                 button_press_count = 0;
                 button_long_press_timer = 0;  // 重複送信を防ぐ
@@ -205,27 +214,18 @@ void ui_manager_loop(void *pvParameters) {
         
         set_outline_border_by_state();  // 状態に応じた外枠色設定
         
-        // ストップウォッチ機能の更新
-        update_stopwatch_timers(&total_time_ms, &lap_time_ms, elapsed_ms);
-        
-        // 時間表示の更新（RACING状態の時のみ）
-        if (current_state == STATE_RACING) {
-            update_time_display(total_time_ms, lap_time_ms);
-        }
-        
         set_spd_data();
         set_gps_data();
 
-        if (hbt_led_timer == 50) {
+        if (hbt_led_timer >= 500) {
             hbt_led_timer = 0;
             hbt_led_status = !hbt_led_status;
             display.set_indicator(0, hbt_led_status);
             ESP_ERROR_CHECK(io_board_l.set_top_grn(hbt_led_status));
         }
-        hbt_led_timer++;
+        hbt_led_timer += UI_MANAGER_LOOP_TIME_MS;
         
         // 現在の時刻を保存し、次のループまで待機
-        xLastWakeTime = xCurrentTime;
-        vTaskDelayUntil(&xLastWakeTime, 10 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, UI_MANAGER_LOOP_TIME_MS / portTICK_PERIOD_MS);
     }
 }
