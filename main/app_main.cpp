@@ -37,28 +37,27 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    // ESP_ERROR_CHECK(example_connect());
+    ESP_ERROR_CHECK(example_connect());
 
     while (1) {
         switch (current_state) {
             case STATE_INITIALIZATION:
                 xTaskCreatePinnedToCore(ui_manager_loop, "ui_manager_loop", 8192, NULL, 1, &ui_manager_task_handle, APP_CPU_NUM);
-                // xTaskCreatePinnedToCore(update_display_loop, "update_display_loop", 8192, &current_state, 1, &display_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_speed_loop, "update_speed_loop", 8192, NULL, 1, &speed_task_handle, APP_CPU_NUM);
                 xTaskCreatePinnedToCore(update_gps_loop, "update_gps_loop", 8192, NULL, 1, &gps_task_handle, APP_CPU_NUM);
                 current_state = STATE_STANDBY;
                 break;
                 
             case STATE_STANDBY:
-                ESP_LOGI(TAG, "STATE_STANDBY");
+                // ESP_LOGI(TAG, "STATE_STANDBY");
                 // 状態遷移通知をチェック
                 break;
                 
             case STATE_RACING:
-                ESP_LOGI(TAG, "STATE_RACING");
+                // ESP_LOGI(TAG, "STATE_RACING");
                 // MQTTタスクを初回のみ作成
                 if (mqtt_task_handle == NULL) {
-                    // xTaskCreatePinnedToCore(update_mqtt_loop, "update_mqtt_loop", 8192, NULL, 1, &mqtt_task_handle, APP_CPU_NUM);
+                    xTaskCreatePinnedToCore(update_mqtt_loop, "update_mqtt_loop", 8192, NULL, 1, &mqtt_task_handle, APP_CPU_NUM);
                     ESP_LOGI(TAG, "MQTT task started");
                 }
                 break;
@@ -81,9 +80,13 @@ extern "C" void app_main(void)
                 case STATE_TRANSITION_TO_STANDBY:
                     if (current_state == STATE_RACING) {
                         if (mqtt_task_handle != NULL) {
+                            ESP_LOGI(TAG, "Stopping MQTT task and cleaning up MQTT client...");
+                            // MQTTクライアントのクリーンアップを先に実行
+                            mqtt_cleanup();
+                            // タスクを削除
                             vTaskDelete(mqtt_task_handle);
                             mqtt_task_handle = NULL;
-                            ESP_LOGI(TAG, "MQTT task stopped");
+                            ESP_LOGI(TAG, "MQTT task stopped and client cleaned up");
                         }
                         current_state = STATE_STANDBY;
                         ESP_LOGI(TAG, "State transition: RACING -> STANDBY");
