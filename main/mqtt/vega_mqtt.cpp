@@ -187,6 +187,7 @@ void update_mqtt_loop(void *pvParameters) {
             .longitude = 0.0,
             .timestamp_ms = 0
         };
+
         collect_telemetry_data(&telemetry_data);
         
         // JSON作成
@@ -215,6 +216,6 @@ void update_mqtt_loop(void *pvParameters) {
         }
 
         free(json_str);
-        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, 500 / portTICK_PERIOD_MS);
     }
 }

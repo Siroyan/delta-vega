@@ -8,7 +8,7 @@
 
 #define TIRE_PULSE_PIN GPIO_NUM_16
 
-const double WHEEL_CIRCUMFERENCE_METER = 0.65;
+const double WHEEL_CIRCUMFERENCE_METER = 1.03;
 
 uint32_t true_pulse_num = 0;
 typedef struct count {
